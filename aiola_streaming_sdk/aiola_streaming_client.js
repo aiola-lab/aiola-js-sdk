@@ -1,3 +1,5 @@
+export const SDK_VERSION = '0.1.0';
+
 export default class AiolaStreamingClient {
     constructor(config) {
       this.socket = null;
@@ -5,6 +7,8 @@ export default class AiolaStreamingClient {
       this.mediaStream = null;
       this.micSource = null;
       this.config = config;
+
+      console.log(`AiolaStreamingClient SDK Version: ${SDK_VERSION}`);
     }
   
     async loadSocketIOLibrary() {
@@ -120,9 +124,6 @@ export default class AiolaStreamingClient {
         try {
           const chunk = event.data;
           const int16Array = this.float32ToInt16(chunk);
-          const hash = await this.generateHash(int16Array.buffer);
-          console.log(`Generated Hash: ${hash}`);
-          console.log(`Processed Chunk Size: ${int16Array.length}`);
           this.socket.emit('binary_data', int16Array.buffer);
         } catch (error) {
           console.error('Error processing chunk:', error);
