@@ -1,6 +1,6 @@
 # Aiola Streaming Vanilla JS SDK
 
-**Version**: `1.0.0` *(Replace with the current value of `SDK_VERSION`)*
+**Version**: `0.1.0`
 
 The **Aiola Streaming Vanilla JS SDK** allows developers to easily integrate microphone audio streaming with Aiola's services. The SDK supports live transcription and event-based interactions in the browser using vanilla JavaScript.
 
