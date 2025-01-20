@@ -48,5 +48,5 @@ This example shows how to set up keyword spotting using the aiOla Streaming SDK.
    ```bash
    git clone https://github.com/aiola-lab/aiola-js-sdk.git
    cd aiola-js-sdk
-  ```
-	2.	Follow the instructions in the individual example directories for specific use cases.
+   ```
+2.	Follow the instructions in the individual example directories for specific use cases.
