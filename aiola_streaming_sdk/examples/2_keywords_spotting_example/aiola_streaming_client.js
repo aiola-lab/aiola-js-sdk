@@ -33,17 +33,23 @@ export default class AiolaStreamingClient {
     async startStreaming() {
       const io = await this.loadSocketIOLibrary();
       const endpoint = this.buildEndpoint();
-      const { apiKey, micConfig, events, transports } = this.config;
-  
+      const { bearer, micConfig, events, transports } = this.config;
+
+      var _transports = transports == 'polling'?['polling']: transports == 'websocket'?['polling', 'websocket']:['polling', 'websocket'];
+
       this.socket = io(endpoint, {
-        transports: transports || ['polling', 'websocket'],
+        transports: _transports,
+        withCredentials: false,
         path: '/api/voice-streaming/socket.io',
+        extraHeaders: {
+            Authorization: bearer
+        },
         transportOptions: {
           polling: {
-            extraHeaders: { 'x-api-key': apiKey },
+            extraHeaders: { Authorization: bearer },
           },
           websocket: {
-            extraHeaders: { 'x-api-key': apiKey },
+            extraHeaders: { Authorization: bearer },
           },
         },
       });
@@ -149,6 +155,27 @@ export default class AiolaStreamingClient {
       }
       if (this.socket) this.socket.disconnect();
       console.log('Streaming stopped');
+    }
+
+    set_kws(keywords) {
+      if (!this.socket.connected) {
+        console.error('Socket is not connected. Unable to send keywords.');
+        return;
+      }
+    
+      try {
+        const binaryData = JSON.stringify(keywords);
+        this.socket.emit('set_keywords', binaryData, (ack) => {
+          if (ack?.status === 'received') {
+            console.log('Keywords successfully sent.');
+          } else {
+            console.warn('Failed to receive acknowledgment for keywords.');
+          }
+        });
+      } catch (error) {
+        console.error('Error emitting keywords:', error);
+        throw error;
+      }
     }
   
     float32ToInt16(float32Array) {

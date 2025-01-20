@@ -10,6 +10,7 @@ The **Aiola Streaming Vanilla JS SDK** allows developers to easily integrate mic
 
 - **Microphone Streaming**: Stream audio data from the browser's microphone.
 - **Live Transcription**: Receive real-time transcription of the streamed audio.
+- **Keyword Spotting**: Configure and emit comma-separated keywords for specific detection.
 - **Event Handling**: Process custom events received from the Aiola backend.
 - **Customizable Configuration**: Easily configure microphone and server connection settings.
 
@@ -56,13 +57,16 @@ Add the following to your HTML file:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aiola Streaming</title>
+  <title>Aiola Streaming: Keyword Spotting</title>
 </head>
 <body>
   <h1>Aiola Streaming Client</h1>
   <h2>Workflow ID: <span id="workflow-id">Loading...</span></h2>
   <button id="start">Start Streaming</button>
   <button id="stop">Stop Streaming</button>
+  <h2>Keyword Spotting</h2>
+  <input type="text" id="keyword-input" placeholder="Enter keywords (comma-separated)">
+  <button id="set-keywords">Set Keywords</button>
 
   <div class="scrollable-table">
     <table id="log-table">
@@ -77,9 +81,9 @@ Add the following to your HTML file:
   </div>
 
   <script type="module">
-    import AiolaStreamingClient from './aiola_streaming_client.js';
+    import AiolaStreamingClient, { SDK_VERSION } from './aiola_streaming_client.js';
 
-    const apiKey = 'your-api-key'; // Replace with your actual API key
+    const bearer = 'bearer'; // Replace with your actual bearer
     const config = {
       baseUrl: `<baseUrl>`,  // The URL of the Aiola server
       namespace: '/events', // Namespace for subscription: /transcript (for transcription) or /events (for transcription + LLM solution)
@@ -89,8 +93,8 @@ Add the following to your HTML file:
         lang_code: 'en_US', // Language code for transcription
         time_zone: 'UTC', // Time zone for timestamp alignment
       },
-      apiKey: `<your_api_key_here>`, // API key, obtained upon registration with Aiola
-      transports: ['polling'], // Communication method: ['websocket'] for L4 or ['polling'] for L7
+      bearer: `<your_bearer_here>`, // Bearer, obtained upon registration with Aiola
+      transports: 'polling', // Communication method: 'websocket' for L4 or 'polling' for L7
       micConfig: {
         sampleRate: 16000, // Sample rate in Hz 
         channels: 1, // Number of audio channels (Mono = 1) 
@@ -105,18 +109,29 @@ Add the following to your HTML file:
 
     const streamingClient = new AiolaStreamingClient(config);
 
+    document.getElementById('start').addEventListener('click', () => streamingClient.startStreaming());
+    document.getElementById('stop').addEventListener('click', () => streamingClient.stopStreaming());
+
+    const keywordInput = document.getElementById('keyword-input');
+    const setKeywordsButton = document.getElementById('set-keywords');
+
+    setKeywordsButton.addEventListener('click', () => {
+      const inputValue = keywordInput.value.trim();
+      if (!inputValue) {
+        console.warn('No keywords entered.');
+        return;
+      }
+      const keywords = inputValue.split(',').map((k) => k.trim()).filter((k) => k);
+      streamingClient.set_kws(keywords);
+    });
+
     function handleTranscript(data) {
-      const transcript = data?.transcript || 'No transcript';
-      console.log(`Transcript received: ${transcript}`);
+      console.log(`Transcript: ${data?.transcript || 'No transcript'}`);
     }
 
     function handleEvents(data) {
-      const events = data?.results?.Items || [];
-      console.log(`Events received:`, events);
+      console.log(`Events:`, data?.results?.Items || []);
     }
-
-    document.getElementById('start').addEventListener('click', () => streamingClient.startStreaming());
-    document.getElementById('stop').addEventListener('click', () => streamingClient.stopStreaming());
   </script>
 </body>
 </html>
@@ -133,10 +148,18 @@ The SDK accepts the following configuration options:
 | `baseUrl`	| string	| Required	| The base URL of the Aiola backend. |
 | `namespace`	| string	| /events	| Namespace for subscription (/events or /transcript). |
 | `queryParams`	| object	| Required	| Query parameters for the connection (e.g., flow_id). |
-| `apiKey`	| string	| Required	| API key for authentication. |
+| `bearer`	| string	| Required	| Bearer token for authentication. |
 | `transports`	| array	| ['polling']	| Transport methods (polling or websocket). |
 | `micConfig`	| object	| See below	| Microphone configuration (sample rate, chunk size). |
 | `events`	| object	| Required	| Callback functions for handling events. |
+
+## Keyword Spotting
+
+You can now configure keyword spotting by emitting a list of keywords using the set_kws method. Example:
+
+```javascript
+streamingClient.set_kws(['keyword1', 'keyword2']);
+```
 
 ## Microphone Configuration
 
