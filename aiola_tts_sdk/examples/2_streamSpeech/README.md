@@ -15,4 +15,6 @@ Install http-server globally:
    ```
 3. Open your browser and navigate to `http://localhost:<check_port_in_the_console>`
 
+<img src="image.png" style="border: 1px solid #ddd; border-radius: 4px; padding: 5px;" />
+
 > **Note**: Due to security restrictions, modern browsers require a secure context (HTTPS or localhost) to access the microphone. Running directly from `file://` protocol won't work for microphone access.
