@@ -4,10 +4,21 @@
 
 The **aiOla TTS Synthesize Test Client** provides a simple interface to convert text into speech using the aiOla Text-to-Speech (TTS) API and download the generated audio file.
 
-## Features
-- Real-time text-to-speech streaming.
-- Convert text to speech and download the audio file as a `.wav`.
-- Select from a variety of predefined voices.
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Initialization](#initialization)
+  - [Synthesis](#synthesis)
+  - [Generate Downloadable Link](#generate-downloadable-link)
+  - [Streaming](#streaming)
+  - [Playback](#playback)
+- [Configuration](#configuration)
+  - [Microphone Configuration](#microphone-configuration)
+  - [Events](#events)
+- [Example Callbacks](#example-callbacks)
 
 ---
 
