@@ -1,6 +1,9 @@
-# Aiola Streaming Vanilla JS SDK
+# aiOla Streaming Vanilla JS SDK
+## Keywords Spotting Example
 
-## Running the Keywords Spotting Example Locally (using http-server)
+###### this example demonstrates how to set up keyword spotting using the aiOla Streaming SDK.
+
+#### Spin up the example (using http-server)
 
 Install http-server globally:
    ```bash

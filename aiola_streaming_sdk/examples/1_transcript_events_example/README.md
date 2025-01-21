@@ -1,6 +1,9 @@
-# Aiola Streaming Vanilla JS SDK
+# aiOla Streaming Vanilla JS SDK
+## Transcript & Events Example
 
-## Running the Transcript Events Example Locally (using http-server)
+###### this example demonstrates how to use the aiOla Streaming SDK to capture live transcripts and handle backend-triggered events.
+
+#### Spin up the example (using http-server)
 
 Install http-server globally:
    ```bash

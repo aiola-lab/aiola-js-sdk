@@ -1,67 +1,18 @@
-# aiOla TTS Synthesize Test Client
+# aiOla TTS Synthesize Vanilla JS SDK
+## Synthesize Speech Example
 
-**Version**: `0.1.0`
+###### this example demonstrates how to use the aiOla TTS SDK to synthesize speech and download the audio file as a `.wav`.
 
-The **aiOla TTS Synthesize Test Client** provides a simple interface to convert text into speech using the aiOla Text-to-Speech (TTS) API and download the generated audio file.
+#### Spin up the example (using http-server)
 
-## Features
-
-- Convert text to speech and download the audio file as a `.wav`.
-- Select from a variety of predefined voices.
-- Simple and intuitive UI for testing the synthesis functionality.
-
-## Requirements
-
-- Modern browser with JavaScript support.
-- Access to the aiOla TTS API endpoint.
-
-## Installation
-
-1. Download or clone the repository:
+Install http-server globally:
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   npm install -g http-server
    ```
+2. Run in the project directory:
+   ```bash
+   http-server
+   ```
+3. Open your browser and navigate to `http://localhost:<check_port_in_the_console>`
 
-2.	Ensure the aiola_tts_client.js SDK is included in your project.
-
-
-## Code Highlights
-
-### Initialization
-
-The TTS client is initialized with the base API URL:
-
-```javascript
-import AiolaTTSClient from './aiola_tts_client.js';
-
-const baseUrl = 'https://tesla.internal.aiola.ai/api/tts';
-const ttsClient = new AiolaTTSClient(baseUrl);
-```
-
-### Synthesis
-
-The synthesize method is used to generate the audio:
-
-```javascript
-const audioBlob = await ttsClient.synthesize(text, voice);
-```
-
-### Generate Downloadable Link
-The audio file is made downloadable using:
-
-```javascript
-const audioUrl = URL.createObjectURL(audioBlob);
-const link = document.createElement('a');
-link.href = audioUrl;
-link.download = 'synthesized_audio.wav';
-```
-
-### Customization
-
-To change the list of voices, update the \<select\> element in index.html:
-
-```html
-<option value="af_bella">Bella</option>
-<option value="af_nicole">Nicole</option>
-```
+> **Note**: Due to security restrictions, modern browsers require a secure context (HTTPS or localhost) to access the microphone. Running directly from `file://` protocol won't work for microphone access.
