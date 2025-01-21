@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>aiOla TTS Synthesize Test Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .status {
+            color: #666;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>aiOla TTS Synthesize Test Client</h1>
+
+        <div>
+            <h3>Text to Convert</h3>
+            <textarea id="textInput" placeholder="Enter text to convert to speech...">Hello, this is a test of the aiOla TTS synthesis feature. You can download the audio after processing.</textarea>
+        </div>
+
+        <div>
+            <h3>Voice Selection</h3>
+            <select id="voiceSelect">
+                <optgroup label="African Female">
+                    <option value="af_bella">Bella</option>
+                    <option value="af_nicole">Nicole</option>
+                    <option value="af_sarah">Sarah</option>
+                    <option value="af_sky">Sky</option>
+                </optgroup>
+                <optgroup label="American Male">
+                    <option value="am_adam">Adam</option>
+                    <option value="am_michael">Michael</option>
+                </optgroup>
+                <optgroup label="British Female">
+                    <option value="bf_emma">Emma</option>
+                    <option value="bf_isabella">Isabella</option>
+                </optgroup>
+                <optgroup label="British Male">
+                    <option value="bm_george">George</option>
+                    <option value="bm_lewis">Lewis</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button id="synthesizeButton">Synthesize</button>
+            <span id="status" class="status"></span>
+        </div>
+    </div>
+
+    <script type="module">
+        import AiolaTTSClient from './aiola_tts_client.js';
+
+        const textInput = document.getElementById('textInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const synthesizeButton = document.getElementById('synthesizeButton');
+        const status = document.getElementById('status');
+
+        // Initialize the TTS client
+        const baseUrl = '<your-base-url>';
+        const ttsClient = new AiolaTTSClient(baseUrl);
+
+        synthesizeButton.addEventListener('click', async () => {
+            try {
+                synthesizeButton.disabled = true;
+                status.textContent = 'Synthesizing...';
+
+                // Get text and voice selection
+                const text = textInput.value.trim();
+                const voice = voiceSelect.value;
+
+                if (!text) {
+                    throw new Error('Text input cannot be empty.');
+                }
+
+                // Use the SDK to synthesize speech
+                const audioBlob = await ttsClient.synthesize(text, voice);
+
+                // Create a downloadable link for the audio
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const link = document.createElement('a');
+                link.href = audioUrl;
+                link.download = 'synthesized_audio.wav';
+                link.textContent = 'Download Audio';
+                link.style.display = 'block';
+                document.body.appendChild(link);
+
+                status.textContent = 'Synthesis complete. Click the link to download the audio.';
+            } catch (error) {
+                console.error('Synthesis error:', error);
+                status.textContent = `Error: ${error.message}`;
+            } finally {
+                synthesizeButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
