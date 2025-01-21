@@ -66,13 +66,13 @@
   <script type="module">
     import AiolaStreamingClient, { SDK_VERSION } from './aiola_streaming_client.js';
 
-    const bearer = 'Bearer BdGVzbGFpbGFubXVzawodGVzbGFpbGFubXVzawo=pbGFubXVz'
+    const bearer = 'Bearer <your-bearer-token>';
     const config = {
-      baseUrl: 'https://tesla.internal.aiola.ai',
+      baseUrl: '<your-base-url>',
       namespace: '/events',
       queryParams: {
-        flow_id: 'f38d5001-3b42-405f-b4e3-6caddce456c3',
-        execution_id: '1',
+        flow_id: '<your-flow-id>',
+        execution_id: '<your-execution-id>',
         lang_code: 'en_US',
         time_zone: 'UTC',
       },
