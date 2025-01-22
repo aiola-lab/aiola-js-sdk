@@ -1,2 +1,4 @@
 **/ssl.*
 aiola_streaming_sdk/examples/.DS_Store
+aiola_tts_sdk/examples/.DS_Store
+aiola_tts_sdk/examples/1_synthesizeSpeech/cors_server.py
