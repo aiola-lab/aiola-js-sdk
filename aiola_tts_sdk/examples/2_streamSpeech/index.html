@@ -104,7 +104,8 @@
 
         // Initialize the TTS client
         const baseUrl = '<your-base-url>';
-        const ttsClient = new AiolaTTSClient(baseUrl);
+        const bearerToken = '<YOUR_BEARER_TOKEN>';
+        const ttsClient = new AiolaTTSClient(baseUrl, bearerToken);
 
         streamButton.addEventListener('click', async () => {
             try {

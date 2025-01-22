@@ -7,11 +7,15 @@ export default class AiolaTTSClient {
     /**
      * @param {string} baseUrl - The base URL for the TTS API.
      */
-    constructor(baseUrl) {
+    constructor(baseUrl, bearerToken) {
       if (!baseUrl) {
         throw new Error("baseUrl is required");
       }
+      if (!bearerToken) {
+        throw new Error("bearerToken is required");
+      }
       this.baseUrl = baseUrl;
+      this.bearerToken = bearerToken;
     }
   
     /**
@@ -26,6 +30,7 @@ export default class AiolaTTSClient {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Bearer ${this.bearerToken}`,
           },
           body: new URLSearchParams(data),
         });
