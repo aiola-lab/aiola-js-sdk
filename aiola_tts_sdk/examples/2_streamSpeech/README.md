@@ -11,9 +11,9 @@ Install http-server globally:
    ```
 2. Run in the project directory:
    ```bash
-   http-server
+   python cors_server.py
    ```
-3. Open your browser and navigate to `http://localhost:<check_port_in_the_console>`
+3. Open your browser and navigate to `http://localhost:3000`
 
 <img src="image.png" style="border: 1px solid #ddd; border-radius: 4px; padding: 5px;" />
 
