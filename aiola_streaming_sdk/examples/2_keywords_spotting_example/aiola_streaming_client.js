@@ -37,6 +37,10 @@ export default class AiolaStreamingClient {
 
       var _transports = transports == 'polling'?['polling']: transports == 'websocket'?['polling', 'websocket']:['polling', 'websocket'];
 
+      // Set the cookie with SameSite=None to allow third-party context
+      const domain = new URL(this.config.baseUrl).hostname;
+      document.cookie = `Auth-Socket=${this.config.bearer}; path=/; domain=${domain}; Secure; SameSite=None`;
+      
       this.socket = io(endpoint, {
         transports: _transports,
         withCredentials: false,
