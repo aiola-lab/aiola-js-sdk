@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aiola STT Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #transcript {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        min-height: 100px;
+      }
+      .controls {
+        margin: 20px 0;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Aiola Speech-to-Text Demo</h1>
+
+    <div class="controls">
+      <button id="startBtn">Start Recording</button>
+      <button id="stopBtn" disabled>Stop Recording</button>
+    </div>
+
+    <div id="transcript"></div>
+
+    <script type="module">
+      import AiolaStreamingClient from "@aiola-js-sdk/stt";
+
+      const client = new AiolaStreamingClient({
+        baseUrl: "YOUR_AIOLA_ENDPOINT",
+        namespace: "/YOUR_NAMESPACE",
+        bearer: "YOUR_AUTH_TOKEN",
+        queryParams: {},
+        micConfig: {
+          sampleRate: 16000,
+          chunkSize: 4096,
+          channels: 1,
+        },
+        events: {
+          onTranscript: (data) => {
+            const transcriptDiv = document.getElementById("transcript");
+            transcriptDiv.textContent = data.text;
+          },
+          onEvents: (data) => {
+            console.log("Event:", data);
+          },
+        },
+      });
+
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+
+      startBtn.addEventListener("click", async () => {
+        try {
+          await client.startStreaming();
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+        } catch (error) {
+          console.error("Failed to start streaming:", error);
+          alert("Failed to start streaming. Check console for details.");
+        }
+      });
+
+      stopBtn.addEventListener("click", () => {
+        client.stopStreaming();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        document.getElementById("transcript").textContent = "";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "@aiola-js-sdk/tts",
+  "version": "0.1.0",
+  "description": "Aiola Text-to-Speech JavaScript SDK",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs",
+    "build:clean": "rimraf dist",
+    "build:esm": "tsc -p tsconfig.json --outDir dist/esm --module ES2015",
+    "build:cjs": "tsc -p tsconfig.json --outDir dist/cjs --module CommonJS",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "aiola",
+    "sdk",
+    "text-to-speech",
+    "tts"
+  ],
+  "author": "",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
+}

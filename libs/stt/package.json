@@ -1,0 +1,40 @@
+{
+  "name": "@aiola-js-sdk/stt",
+  "version": "0.1.0",
+  "description": "Aiola Speech-to-Text JavaScript SDK",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs",
+    "build:clean": "rimraf dist",
+    "build:esm": "tsc -p tsconfig.json --outDir dist/esm --module ES2015",
+    "build:cjs": "tsc -p tsconfig.json --outDir dist/cjs --module CommonJS",
+    "type-check": "tsc --noEmit",
+    "test": "jest"
+  },
+  "keywords": [
+    "aiola",
+    "sdk",
+    "streaming",
+    "speech-to-text",
+    "stt"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io-client": "^4.5.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.19",
+    "ts-jest": "^29.2.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

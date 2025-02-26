@@ -61,17 +61,17 @@
   <script type="module">
     import AiolaStreamingClient, { SDK_VERSION } from './aiola_streaming_client.js';
 
-    const bearer = 'Bearer <your-bearer-token>';
+    // Replace these values with your actual configuration
     const config = {
-      baseUrl: '<your-base-url>',
-      namespace: '/events',
+      baseUrl: 'https://united-testing.internal.aiola.ai',  // Your API server URL
+      namespace: '/api/voice-streaming',  // The namespace for your Socket.IO endpoint
       queryParams: {
-        flow_id: '<your-flow-id>',
-        execution_id: '<your-execution-id>',
+        flow_id: 'B206bea3-a80e-4a82-8c64-c3364584d75d',  // Your flow ID
+        execution_id: '3333',  // Your execution ID
         lang_code: 'en_US',
         time_zone: 'UTC',
       },
-      bearer: bearer,
+      bearer: 'your_actual_bearer_token_here',  // Your bearer token
       transports: 'websocket',
       micConfig: {
         sampleRate: 16000,
@@ -85,6 +85,7 @@
       },
     };
 
+    // Initialize the client with the config
     const streamingClient = new AiolaStreamingClient(config);
 
     const tableBody = document.getElementById('log-table').querySelector('tbody');

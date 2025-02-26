@@ -1,66 +1,83 @@
-# aiOla JavaScript SDKs
+# Aiola JavaScript SDK
 
-Welcome to the **aiOla JavaScript SDKs** repository. This repository contains examples and documentation for various SDKs that integrate with aiOla's Text-to-Speech (TTS) and streaming services.
+This repository contains the official JavaScript/TypeScript SDKs for Aiola's services.
 
----
+## Packages
 
-### aiOla Streaming SDK
+### Speech-to-Text (STT)
 
-### Features
+```bash
+npm install @aiola-js-sdk/stt
+```
 
-- **Microphone Streaming**: Stream audio data from the browser's microphone.
-- **Live Transcription**: Receive real-time transcription of the streamed audio.
-- **Event Handling**: Process custom events received from the Aiola backend.
-- **Customizable Configuration**: Easily configure microphone and server connection settings.
-- **Keywords Spotting**: Set up keyword spotting for real-time detection of specific keywords.
-- **Supported Languages: en-EN, de-DE, fr-FR, zh-ZH, es-ES, pt-PT**
+```typescript
+import AiolaStreamingClient from "@aiola-js-sdk/stt";
 
-- [read more](./aiola_streaming_sdk/README.md)
+const client = new AiolaStreamingClient({
+  baseUrl: "https://your-aiola-endpoint.com",
+  namespace: "/your-namespace",
+  bearer: "your-auth-token",
+  queryParams: {},
+  micConfig: {
+    sampleRate: 16000,
+    chunkSize: 4096,
+    channels: 1,
+  },
+  events: {
+    onTranscript: (data) => {
+      console.log("Transcript:", data);
+    },
+    onEvents: (data) => {
+      console.log("Event:", data);
+    },
+  },
+});
 
+await client.startStreaming();
+```
 
-#### 1. Transcript and Events Example
-- This example demonstrates how to use the aiOla Streaming SDK to capture live transcripts and handle backend-triggered events.
-- **Key Features**:
-  - Real-time transcription.
-  - Event-driven callbacks.
-  - [read more](./aiola_streaming_sdk/examples/1_transcript_events_example/README.md)
+### Text-to-Speech (TTS)
 
-#### 2. Keyword Spotting Example
-- This example shows how to set up keyword spotting using the aiOla Streaming SDK.
-- **Key Features**:
-  - Spot predefined keywords in live streams.
-  - Event-driven keyword matching.
-  - [read more](./aiola_streaming_sdk/examples/2_keywords_spotting_example/README.md)
----
+```bash
+npm install @aiola-js-sdk/tts
+```
 
-### aiOla TTS SDK
+```typescript
+import AiolaTTSClient from "@aiola-js-sdk/tts";
 
-### Features
-- Real-time text-to-speech streaming.
-- Convert text to speech and download the audio file as a `.wav`.
-- Select from a variety of predefined voices.
-- [read more](./aiola_tts_sdk/README.md)
+const client = new AiolaTTSClient({
+  baseUrl: "https://your-aiola-endpoint.com",
+  bearer: "your-auth-token",
+  defaultVoice: "en-US-1",
+});
 
-#### 1. Synthesize Speech
-- This example demonstrates how to convert text into speech and download the resulting audio file using the aiOla TTS SDK.
-- **Key Features**:
-  - Converts text into `.wav` audio files.
-  - Supports voice selection.
-  - [read more](./aiola_tts_sdk/examples/1_synthesizeSpeech/README.md)
+// Synthesize speech and get audio buffer
+const audioBuffer = await client.synthesizeSpeech("Hello, world!");
 
-#### 2. Stream Speech
-- This example shows how to stream text-to-speech in real-time, enabling audio playback before the entire text is processed.
-- **Key Features**:
-  - Real-time TTS streaming.
-  - Immediate audio playback.
-  - [read more](./aiola_tts_sdk/examples/2_streamSpeech/README.md)
----
+// Or stream the audio
+const audioStream = await client.streamSpeech("Hello, world!");
+```
 
-## Get Started
+## Development
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/aiola-lab/aiola-js-sdk.git
-   cd aiola-js-sdk
-   ```
-2.	Follow the instructions in the individual example directories for specific use cases.
+### Setup
+
+```bash
+npm install
+```
+
+### Build all packages
+
+```bash
+npm run build
+```
+
+### Type checking
+
+```bash
+npm run type-check
+```
+
+## License
+
+ISC
