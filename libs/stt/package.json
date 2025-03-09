@@ -9,10 +9,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:clean && npm run build:esm && npm run build:cjs",
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:copy-processor && npm run build:update-paths",
     "build:clean": "rimraf dist",
     "build:esm": "tsc -p tsconfig.json --outDir dist/esm --module ES2015",
     "build:cjs": "tsc -p tsconfig.json --outDir dist/cjs --module CommonJS",
+    "build:copy-processor": "cp src/audio-processor.js dist/esm/ && cp src/audio-processor.js dist/cjs/",
+    "build:update-paths": "sed -i '' 's|\"/libs/stt/src/audio-processor.js\"|\"./audio-processor.js\"|g' dist/esm/index.js dist/cjs/index.js",
     "type-check": "tsc --noEmit",
     "test": "jest"
   },

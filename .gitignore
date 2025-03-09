@@ -1,3 +1,7 @@
 **/ssl.*
 aiola_streaming_sdk/examples/.DS_Store
 aiola_tts_sdk/examples/.DS_Store
+**/node_modules
+**/dist/**
+**/coverage
+**/build

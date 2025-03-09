@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aiola STT Demo</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -37,13 +38,18 @@
     <div id="transcript"></div>
 
     <script type="module">
-      import AiolaStreamingClient from "@aiola-js-sdk/stt";
+      import { AiolaStreamingClient } from "/libs/stt/dist/esm/index.js";
 
       const client = new AiolaStreamingClient({
-        baseUrl: "YOUR_AIOLA_ENDPOINT",
-        namespace: "/YOUR_NAMESPACE",
-        bearer: "YOUR_AUTH_TOKEN",
-        queryParams: {},
+        baseUrl: "https://united-testing.internal.aiola.ai",
+        namespace: "/api/voice-streaming",
+        bearer: "d64f12f10c892d44fb97aab84fa00b27",
+        queryParams: {
+          flow_id: "50496875-3a47-4283-8052-7a200c156c7c", // Your flow ID
+          execution_id: "3333", // Your execution ID
+          lang_code: "en_US",
+          time_zone: "UTC",
+        },
         micConfig: {
           sampleRate: 16000,
           chunkSize: 4096,

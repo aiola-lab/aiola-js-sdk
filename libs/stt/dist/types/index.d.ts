@@ -15,7 +15,7 @@ interface AiolaConfig {
     };
     transports?: "polling" | "websocket" | "all";
 }
-export default class AiolaStreamingClient {
+export declare class AiolaStreamingClient {
     private socket;
     private audioContext;
     private mediaStream;
@@ -25,7 +25,6 @@ export default class AiolaStreamingClient {
     private buildEndpoint;
     startStreaming(): Promise<void>;
     private startMicStreaming;
-    private generateHash;
     stopStreaming(): void;
     setKeywords(keywords: string[]): void;
     private float32ToInt16;

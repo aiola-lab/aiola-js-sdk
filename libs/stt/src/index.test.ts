@@ -1,6 +1,6 @@
-import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 import { Socket } from "socket.io-client";
-import AiolaStreamingClient from "./index";
+import { jest } from "@jest/globals";
+import { AiolaStreamingClient } from "./index";
 
 jest.mock("socket.io-client", () => {
   const mockSocketImpl = {
@@ -51,7 +51,18 @@ describe("AiolaStreamingClient", () => {
         expect.stringContaining(mockConfig.baseUrl),
         expect.objectContaining({
           path: "/api/voice-streaming/socket.io",
-          extraHeaders: { Authorization: mockConfig.bearer },
+          transports: ["polling", "websocket"],
+          extraHeaders: {
+            Authorization: `Bearer ${mockConfig.bearer}`,
+          },
+          transportOptions: {
+            polling: {
+              extraHeaders: { Authorization: `Bearer ${mockConfig.bearer}` },
+            },
+            websocket: {
+              extraHeaders: { Authorization: `Bearer ${mockConfig.bearer}` },
+            },
+          },
         })
       );
 

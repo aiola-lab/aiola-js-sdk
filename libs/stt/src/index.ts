@@ -19,64 +19,65 @@ interface AiolaConfig {
   transports?: "polling" | "websocket" | "all";
 }
 
-export default class AiolaStreamingClient {
-  private socket: Socket | null;
-  private audioContext: AudioContext | null;
-  private mediaStream: MediaStream | null;
-  private micSource: MediaStreamAudioSourceNode | null;
+// Handle both Node.js and browser environments
+declare const window: any;
+const getIO = () => {
+  if (typeof window !== "undefined" && window.io) {
+    return window.io;
+  }
+  // For Node.js environment
+  return require("socket.io-client").io;
+};
+
+export class AiolaStreamingClient {
+  private socket: Socket | null = null;
+  private audioContext: AudioContext | null = null;
+  private mediaStream: MediaStream | null = null;
+  private micSource: MediaStreamAudioSourceNode | null = null;
   private config: AiolaConfig;
 
   constructor(config: AiolaConfig) {
-    this.socket = null;
-    this.audioContext = null;
-    this.mediaStream = null;
-    this.micSource = null;
     this.config = config;
-
     console.log(`AiolaStreamingClient SDK Version: ${SDK_VERSION}`);
   }
 
   private buildEndpoint(): string {
     const { baseUrl, namespace, queryParams } = this.config;
     const queryString = new URLSearchParams(queryParams).toString();
-    return `${baseUrl}${namespace}?${queryString}`;
+    return `${baseUrl}${namespace}${queryString ? `?${queryString}` : ""}`;
   }
 
   public async startStreaming(): Promise<void> {
-    const endpoint = this.buildEndpoint();
-    const { bearer, micConfig, events, transports } = this.config;
-
+    const io = getIO();
+    const { bearer, transports, events, micConfig } = this.config;
+    const _bearer = `Bearer ${bearer}`;
     const _transports =
       transports === "polling"
         ? ["polling"]
         : transports === "websocket"
         ? ["polling", "websocket"]
         : ["polling", "websocket"];
-
-    // Set the cookie with SameSite=None to allow third-party context
-    const domain = new URL(this.config.baseUrl).hostname;
-    document.cookie = `Auth-Socket=${this.config.bearer}; path=/; domain=${domain}; Secure; SameSite=None`;
-
-    this.socket = SocketIO(endpoint, {
-      transports: _transports,
-      withCredentials: false,
+    this.socket = io(this.buildEndpoint(), {
       path: "/api/voice-streaming/socket.io",
+      transports: _transports,
       extraHeaders: {
-        Authorization: bearer,
+        Authorization: _bearer,
       },
       transportOptions: {
         polling: {
-          extraHeaders: { Authorization: bearer },
+          extraHeaders: { Authorization: _bearer },
         },
         websocket: {
-          extraHeaders: { Authorization: bearer },
+          extraHeaders: { Authorization: _bearer },
         },
       },
     });
 
-    this.socket.on("connect", () => console.log("Socket connected"));
-    this.socket.on("disconnect", () => console.log("Socket disconnected"));
-    this.socket.on("connect_error", (error: Error) =>
+    if (!this.socket) {
+      throw new Error("Failed to initialize socket connection");
+    }
+
+    this.socket.on("connect_error", (error) =>
       console.error("Socket connection error:", error)
     );
     this.socket.on("transcript", events.onTranscript);
@@ -103,57 +104,7 @@ export default class AiolaStreamingClient {
       this.mediaStream
     );
 
-    const processorCode = `
-      class InlineAudioProcessor extends AudioWorkletProcessor {
-        private chunkSize: number;
-        private buffer: Float32Array;
-        private processingPromise: Promise<void>;
-
-        constructor(options: AudioWorkletNodeOptions) {
-          super();
-          this.chunkSize = options.processorOptions?.chunkSize || 4096;
-          this.buffer = new Float32Array();
-          this.processingPromise = Promise.resolve();
-        }
-
-        async waitForPreviousChunk(): Promise<void> {
-          await this.processingPromise;
-        }
-
-        async processChunk(chunk: Float32Array): Promise<void> {
-          this.processingPromise = new Promise((resolve) => {
-            this.port.postMessage(chunk);
-            resolve();
-          });
-        }
-
-        process(inputs: Float32Array[][]): boolean {
-          const input = inputs[0];
-          if (input && input[0]) {
-            const audioData = input[0];
-            const newBuffer = new Float32Array(this.buffer.length + audioData.length);
-            newBuffer.set(this.buffer);
-            newBuffer.set(audioData, this.buffer.length);
-            this.buffer = newBuffer;
-
-            if (this.buffer.length >= this.chunkSize) {
-              const chunk = this.buffer.slice(0, this.chunkSize);
-              this.buffer = this.buffer.slice(this.chunkSize);
-              this.waitForPreviousChunk();
-              this.processChunk(chunk);
-            }
-          }
-          return true;
-        }
-      }
-
-      registerProcessor('audio-processor', InlineAudioProcessor);
-    `;
-
-    const blob = new Blob([processorCode], { type: "application/javascript" });
-    const url = URL.createObjectURL(blob);
-
-    await this.audioContext.audioWorklet.addModule(url);
+    await this.audioContext.audioWorklet.addModule("./audio-processor.js");
 
     const audioWorkletNode = new AudioWorkletNode(
       this.audioContext,
@@ -175,13 +126,6 @@ export default class AiolaStreamingClient {
 
     this.micSource.connect(audioWorkletNode);
     console.log("Microphone streaming started");
-  }
-
-  private async generateHash(arrayBuffer: ArrayBuffer): Promise<string> {
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-    return Array.from(new Uint8Array(hashBuffer))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
   }
 
   public stopStreaming(): void {
