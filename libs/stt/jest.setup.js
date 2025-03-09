@@ -1,32 +1,63 @@
 import "whatwg-fetch";
 import { io } from "socket.io-client";
 
-// Mock navigator.mediaDevices
-global.navigator.mediaDevices = {
-  getUserMedia: jest.fn().mockResolvedValue({
-    getTracks: () => [{
-      stop: jest.fn()
-    }]
-  })
-};
-
-// Mock AudioContext and related APIs
-global.AudioContext = jest.fn().mockImplementation(() => ({
-  createMediaStreamSource: jest.fn().mockReturnValue({
+// Mock AudioContext and AudioWorkletNode
+class MockAudioContext {
+  createMediaStreamSource = jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
-    disconnect: jest.fn()
-  }),
-  audioWorklet: {
-    addModule: jest.fn().mockResolvedValue(undefined)
-  }
-}));
+    disconnect: jest.fn(),
+    context: this,
+    numberOfInputs: 1,
+    numberOfOutputs: 1,
+    channelCount: 2,
+    channelCountMode: 'explicit',
+    channelInterpretation: 'speakers',
+  }));
+  audioWorklet = {
+    addModule: jest.fn().mockReturnValue(Promise.resolve()),
+  };
+  destination = {};
+  currentTime = 0;
+  sampleRate = 44100;
+  state = "running";
+  addEventListener = jest.fn();
+  removeEventListener = jest.fn();
+  dispatchEvent = jest.fn();
+}
 
-global.AudioWorkletNode = jest.fn().mockImplementation(() => ({
-  port: {
-    onmessage: jest.fn(),
-    postMessage: jest.fn()
+// Mock AudioWorkletNode
+class MockAudioWorkletNode {
+  constructor(context) {
+    this.context = context;
+    this.port = { onmessage: jest.fn() };
+    this.connect = jest.fn();
+    this.disconnect = jest.fn();
+    this.numberOfInputs = 1;
+    this.numberOfOutputs = 1;
+    this.channelCount = 2;
+    this.channelCountMode = 'explicit';
+    this.channelInterpretation = 'speakers';
   }
-}));
+}
+
+// Setup global mocks
+global.AudioContext = MockAudioContext;
+global.AudioWorkletNode = MockAudioWorkletNode;
+
+// Mock navigator.mediaDevices
+if (!global.navigator) {
+  global.navigator = {};
+}
+
+const mockGetUserMedia = jest.fn().mockReturnValue(Promise.resolve({} as MediaStream));
+
+if (!navigator.mediaDevices) {
+  Object.defineProperty(navigator, 'mediaDevices', {
+    value: { getUserMedia: mockGetUserMedia },
+    configurable: true,
+    writable: true,
+  });
+}
 
 // Mock URL
 global.URL = {

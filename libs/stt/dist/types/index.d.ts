@@ -1,4 +1,3 @@
-export declare const SDK_VERSION = "0.1.0";
 interface AiolaConfig {
     baseUrl: string;
     namespace: string;
@@ -12,6 +11,10 @@ interface AiolaConfig {
     events: {
         onTranscript: (data: any) => void;
         onEvents: (data: any) => void;
+        onConnect?: () => void;
+        onError?: (error: Error) => void;
+        onStartRecord?: () => void;
+        onStopRecord?: () => void;
     };
     transports?: "polling" | "websocket" | "all";
 }
@@ -22,11 +25,13 @@ export declare class AiolaStreamingClient {
     private micSource;
     private config;
     constructor(config: AiolaConfig);
-    private buildEndpoint;
-    startStreaming(): Promise<void>;
-    private startMicStreaming;
-    stopStreaming(): void;
+    openSocket(): Promise<void>;
+    closeSocket(): void;
+    startRecording(): Promise<void>;
+    stopRecording(): void;
     setKeywords(keywords: string[]): void;
+    private buildEndpoint;
+    private buildPath;
     private float32ToInt16;
 }
 export {};

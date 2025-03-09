@@ -1,25 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "module": "ESNext",
-    "lib": ["DOM", "ES2018"],
-    "declaration": true,
-    "declarationDir": "dist/types",
+    "target": "ES2015",
+    "lib": ["ES2015", "DOM"],
     "strict": true,
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "types": ["jest", "node", "@jest/globals"]
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.test.js",
-    "src/**/__tests__/*"
-  ]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

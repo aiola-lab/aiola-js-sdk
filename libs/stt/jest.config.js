@@ -1,10 +1,26 @@
 /** @type {import('jest').Config} */
-module.exports = {
+export default {
   preset: "ts-jest",
   testEnvironment: "jsdom",
-  testMatch: ["<rootDir>/src/**/*.test.ts"],
-  transform: {
-    "^.+\\.tsx?$": "ts-jest",
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  setupFiles: ["<rootDir>/jest.setup.js"],
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        useESM: true,
+      },
+    ],
+    "^.+\\.jsx?$": [
+      "babel-jest",
+      {
+        presets: ["@babel/preset-env"],
+      },
+    ],
+  },
+  extensionsToTreatAsEsm: [".ts"],
+  testMatch: ["**/*.test.ts"],
+  setupFiles: ["./jest.setup.ts"],
+  transformIgnorePatterns: ["node_modules/(?!whatwg-fetch|socket.io-client)/"],
 };

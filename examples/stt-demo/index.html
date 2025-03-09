@@ -24,15 +24,84 @@
       button {
         padding: 10px 20px;
         font-size: 16px;
+        margin-right: 10px;
+      }
+      .toggle-container {
+        display: flex;
+        gap: 20px;
+        margin: 20px 0;
+      }
+      .toggle-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 60px;
+      }
+      .toggle-label {
+        color: #666;
+        font-size: 14px;
+        user-select: none;
+        text-align: left;
+      }
+      .toggle-button {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 20px;
+        border-radius: 10px;
+        background-color: #bfbfbf;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .toggle-button.active {
+        background-color: #4caf50;
+      }
+      .toggle-button::before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: all 0.3s ease;
+      }
+      .toggle-button.active::before {
+        left: 42px;
+      }
+      .toggle-button.active .toggle-label {
+        color: white;
+      }
+      .message-container {
+        margin: 20px 0;
+        padding: 10px 0;
+        min-height: 24px;
+        font-size: 14px;
+        color: #666;
+      }
+      .message-container span {
+        color: #2e7d32;
+      }
+      .message-container span.error {
+        color: #d32f2f;
       }
     </style>
   </head>
   <body>
     <h1>Aiola Speech-to-Text Demo</h1>
 
-    <div class="controls">
-      <button id="startBtn">Start Recording</button>
-      <button id="stopBtn" disabled>Stop Recording</button>
+    <div class="message-container" id="messageContainer">Ready to connect</div>
+
+    <div class="toggle-container">
+      <div class="toggle-group">
+        <span class="toggle-label">Connect</span>
+        <div id="socketToggle" class="toggle-button"></div>
+      </div>
+      <div class="toggle-group">
+        <span class="toggle-label">Record</span>
+        <div id="recordingToggle" class="toggle-button"></div>
+      </div>
     </div>
 
     <div id="transcript"></div>
@@ -40,13 +109,31 @@
     <script type="module">
       import { AiolaStreamingClient } from "/libs/stt/dist/esm/index.js";
 
+      const messageContainer = document.getElementById("messageContainer");
+      const socketToggle = document.getElementById("socketToggle");
+      const recordingToggle = document.getElementById("recordingToggle");
+
+      function showMessage(message, isError = false) {
+        messageContainer.innerHTML = `<span class="${
+          isError ? "error" : ""
+        }">${message}</span>`;
+      }
+
+      function updateSocketStatus(connected) {
+        socketToggle.classList.toggle("active", connected);
+        recordingToggle.classList.toggle("active", false);
+        showMessage(
+          connected ? "Socket connected successfully" : "Socket disconnected"
+        );
+      }
+
       const client = new AiolaStreamingClient({
-        baseUrl: "https://united-testing.internal.aiola.ai",
-        namespace: "/api/voice-streaming",
-        bearer: "d64f12f10c892d44fb97aab84fa00b27",
+        baseUrl: "https://api-testing.internal.aiola.ai",
+        bearer: "fa6a7a103c2b008301088471e7aab343",
+        transports: "polling",
         queryParams: {
-          flow_id: "50496875-3a47-4283-8052-7a200c156c7c", // Your flow ID
-          execution_id: "3333", // Your execution ID
+          flow_id: "848f4a40-5c3d-481b-a2c6-da0b3d99e7e0",
+          execution_id: "3333",
           lang_code: "en_US",
           time_zone: "UTC",
         },
@@ -57,34 +144,67 @@
         },
         events: {
           onTranscript: (data) => {
+            console.log("Transcript:", data.transcript);
             const transcriptDiv = document.getElementById("transcript");
-            transcriptDiv.textContent = data.text;
+            const newTranscript = document.createElement("div");
+            newTranscript.textContent = data.transcript;
+            transcriptDiv.appendChild(newTranscript);
+            transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
           },
           onEvents: (data) => {
             console.log("Event:", data);
           },
+          onConnect: () => {
+            updateSocketStatus(true);
+          },
+          onError: (error) => {
+            console.error("Connection error:", error);
+            updateSocketStatus(false);
+            showMessage("Connection error: " + error, true);
+          },
+          onStartRecord: () => {
+            showMessage("Recording started");
+            recordingToggle.classList.add("active");
+          },
+          onStopRecord: () => {
+            showMessage("Recording stopped");
+            recordingToggle.classList.remove("active");
+          },
         },
       });
 
-      const startBtn = document.getElementById("startBtn");
-      const stopBtn = document.getElementById("stopBtn");
-
-      startBtn.addEventListener("click", async () => {
+      socketToggle.addEventListener("click", async () => {
+        const isConnected = socketToggle.classList.contains("active");
         try {
-          await client.startStreaming();
-          startBtn.disabled = true;
-          stopBtn.disabled = false;
+          if (isConnected) {
+            client.closeSocket();
+            const isRecording = recordingToggle.classList.contains("active");
+            if (isRecording) {
+              client.stopRecording();
+            }
+            updateSocketStatus(false);
+          } else {
+            showMessage("Connecting...");
+            await client.openSocket();
+          }
         } catch (error) {
-          console.error("Failed to start streaming:", error);
-          alert("Failed to start streaming. Check console for details.");
+          showMessage("Connection error: " + error, true);
         }
       });
 
-      stopBtn.addEventListener("click", () => {
-        client.stopStreaming();
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        document.getElementById("transcript").textContent = "";
+      recordingToggle.addEventListener("click", async () => {
+        const isRecording = recordingToggle.classList.contains("active");
+        try {
+          if (isRecording) {
+            client.stopRecording();
+            recordingToggle.classList.remove("active");
+          } else {
+            showMessage("Starting recording...");
+            await client.startRecording();
+          }
+        } catch (error) {
+          showMessage("Recording error: " + error, true);
+        }
       });
     </script>
   </body>

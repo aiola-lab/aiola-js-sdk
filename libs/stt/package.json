@@ -1,7 +1,7 @@
 {
   "name": "@aiola-js-sdk/stt",
-  "version": "0.1.0",
-  "description": "Aiola Speech-to-Text JavaScript SDK",
+  "version": "0.0.1",
+  "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -9,14 +9,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:copy-processor && npm run build:update-paths",
-    "build:clean": "rimraf dist",
-    "build:esm": "tsc -p tsconfig.json --outDir dist/esm --module ES2015",
-    "build:cjs": "tsc -p tsconfig.json --outDir dist/cjs --module CommonJS",
-    "build:copy-processor": "cp src/audio-processor.js dist/esm/ && cp src/audio-processor.js dist/cjs/",
-    "build:update-paths": "sed -i '' 's|\"/libs/stt/src/audio-processor.js\"|\"./audio-processor.js\"|g' dist/esm/index.js dist/cjs/index.js",
-    "type-check": "tsc --noEmit",
-    "test": "jest"
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "aiola",
@@ -28,13 +26,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "socket.io-client": "^4.5.0"
+    "socket.io-client": "^4.7.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.19",
-    "ts-jest": "^29.2.6"
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3",
+    "whatwg-fetch": "^3.6.2"
   },
   "publishConfig": {
     "access": "public"
