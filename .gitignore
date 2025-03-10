@@ -5,3 +5,4 @@ aiola_tts_sdk/examples/.DS_Store
 **/dist/**
 **/coverage
 **/build
+**/dist
