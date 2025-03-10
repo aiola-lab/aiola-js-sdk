@@ -3,6 +3,7 @@ import {
   AiolaStreamingClient,
   AiolaSocketError,
   AiolaSocketErrorCode,
+  AiolaSocketNamespace,
 } from "./index";
 
 // Mock socket.io-client
@@ -100,7 +101,7 @@ describe("AiolaStreamingClient", () => {
 
     client = new AiolaStreamingClient({
       baseUrl: "https://test.com",
-      namespace: "test",
+      namespace: AiolaSocketNamespace.EVENTS,
       bearer: "test-token",
       queryParams: {},
       micConfig: {

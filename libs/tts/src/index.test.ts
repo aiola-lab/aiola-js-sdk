@@ -23,11 +23,15 @@ describe("AiolaTTSClient", () => {
 
   describe("synthesizeSpeech", () => {
     it("should make correct API call for speech synthesis", async () => {
-      const mockArrayBuffer = new ArrayBuffer(8);
+      const mockBlob = new Blob(["mock audio data"], { type: "audio/wav" });
       const mockResponse = {
         ok: true,
         status: 200,
-        arrayBuffer: () => Promise.resolve(mockArrayBuffer),
+        headers: new Headers({
+          "Content-Type": "audio/wav",
+        }),
+        blob: () => Promise.resolve(mockBlob),
+        json: () => Promise.resolve({}),
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
@@ -38,17 +42,14 @@ describe("AiolaTTSClient", () => {
         expect.objectContaining({
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: mockConfig.bearer,
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${mockConfig.bearer}`,
           },
-          body: JSON.stringify({
-            text: "Hello world",
-            voice: mockConfig.defaultVoice,
-          }),
+          body: expect.any(URLSearchParams),
         })
       );
 
-      expect(result).toBe(mockArrayBuffer);
+      expect(result).toBe(mockBlob);
     });
 
     it("should throw error when API call fails", async () => {
@@ -56,11 +57,13 @@ describe("AiolaTTSClient", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
+        headers: new Headers(),
+        json: () => Promise.resolve({ detail: "Invalid request" }),
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
       await expect(client.synthesizeSpeech("Hello world")).rejects.toThrow(
-        "TTS synthesis failed: Bad Request"
+        "Invalid request"
       );
     });
   });
@@ -71,6 +74,9 @@ describe("AiolaTTSClient", () => {
       const mockResponse = {
         ok: true,
         status: 200,
+        headers: new Headers(),
+        blob: () => Promise.resolve(new Blob()),
+        json: () => Promise.resolve({}),
         body: mockStream,
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
@@ -78,21 +84,18 @@ describe("AiolaTTSClient", () => {
       const result = await client.streamSpeech("Hello world");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `${mockConfig.baseUrl}/api/tts/stream`,
+        `${mockConfig.baseUrl}/api/tts/synthesize/stream`,
         expect.objectContaining({
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: mockConfig.bearer,
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${mockConfig.bearer}`,
           },
-          body: JSON.stringify({
-            text: "Hello world",
-            voice: mockConfig.defaultVoice,
-          }),
+          body: expect.any(URLSearchParams),
         })
       );
 
-      expect(result).toBe(mockStream);
+      expect(result).toBeInstanceOf(ReadableStream);
     });
 
     it("should throw error when API call fails", async () => {
@@ -100,11 +103,13 @@ describe("AiolaTTSClient", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
+        headers: new Headers(),
+        json: () => Promise.resolve({ detail: "Invalid request" }),
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
       await expect(client.streamSpeech("Hello world")).rejects.toThrow(
-        "TTS streaming failed: Bad Request"
+        "Invalid request"
       );
     });
 
@@ -112,6 +117,9 @@ describe("AiolaTTSClient", () => {
       const mockResponse = {
         ok: true,
         status: 200,
+        headers: new Headers(),
+        blob: () => Promise.resolve(new Blob()),
+        json: () => Promise.resolve({}),
         body: null,
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);

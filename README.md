@@ -103,14 +103,30 @@ import AiolaTTSClient from "@aiola-js-sdk/tts";
 const client = new AiolaTTSClient({
   baseUrl: "https://your-aiola-endpoint.com",
   bearer: "your-auth-token",
-  defaultVoice: "en-US-1",
 });
 
 // Synthesize speech and get audio buffer
-const audioBuffer = await client.synthesizeSpeech("Hello, world!");
+const audioBuffer = await client.synthesizeSpeech("Hello, world!", "af_bella");
 
 // Or stream the audio
-const audioStream = await client.streamSpeech("Hello, world!");
+const audioStream = await client.streamSpeech("Hello, world!", "af_nicole");
+
+// Get available voices
+const voices = client.getVoices();
+// Returns:
+// {
+//   Default: "af",
+//   Bella: "af_bella",
+//   Nicole: "af_nicole",
+//   Sarah: "af_sarah",
+//   Sky: "af_sky",
+//   Adam: "am_adam",
+//   Michael: "am_michael",
+//   Emma: "bf_emma",
+//   Isabella: "bf_isabella",
+//   George: "bm_george",
+//   Lewis: "bm_lewis"
+// }
 ```
 
 ## Development
