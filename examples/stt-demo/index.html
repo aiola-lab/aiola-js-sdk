@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aiola STT Demo</title>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
+    />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -30,6 +34,7 @@
         display: flex;
         gap: 20px;
         margin: 20px 0;
+        align-items: flex-end;
       }
       .toggle-group {
         display: flex;
@@ -37,18 +42,33 @@
         gap: 8px;
         width: 60px;
       }
+      .separator {
+        color: #ccc;
+        font-size: 20px;
+        line-height: 1;
+        padding: 0 10px;
+      }
       .toggle-label {
         color: #666;
         font-size: 14px;
         user-select: none;
-        text-align: left;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+      }
+      .toggle-label i {
+        font-size: 20px;
+        display: inline-block;
       }
       .toggle-button {
         position: relative;
         display: inline-block;
         width: 60px;
-        height: 20px;
-        border-radius: 10px;
+        height: 30px;
+        border-radius: 15px;
         background-color: #bfbfbf;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -59,26 +79,46 @@
       .toggle-button::before {
         content: "";
         position: absolute;
-        width: 16px;
-        height: 16px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         background-color: white;
         top: 2px;
         left: 2px;
         transition: all 0.3s ease;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .toggle-button.active::before {
-        left: 42px;
+        left: 32px;
       }
-      .toggle-button.active .toggle-label {
-        color: white;
+      .toggle-button i {
+        position: absolute;
+        font-size: 14px;
+        color: #666;
+        z-index: 2;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 10px;
+        transition: all 0.3s ease;
+      }
+      .toggle-button.active i {
+        left: 40px;
+        color: #4caf50;
       }
       .message-container {
-        margin: 20px 0;
-        padding: 10px 0;
+        margin: 0;
+        padding: 0;
         min-height: 24px;
         font-size: 14px;
         color: #666;
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        line-height: 20px;
       }
       .message-container span {
         color: #2e7d32;
@@ -91,16 +131,20 @@
   <body>
     <h1>Aiola Speech-to-Text Demo</h1>
 
-    <div class="message-container" id="messageContainer">Ready to connect</div>
-
     <div class="toggle-container">
       <div class="toggle-group">
-        <span class="toggle-label">Connect</span>
-        <div id="socketToggle" class="toggle-button"></div>
+        <div id="socketToggle" class="toggle-button">
+          <i class="ti ti-plug-connected-x"></i>
+        </div>
       </div>
       <div class="toggle-group">
-        <span class="toggle-label">Record</span>
-        <div id="recordingToggle" class="toggle-button"></div>
+        <div id="recordingToggle" class="toggle-button">
+          <i class="ti ti-microphone-off"></i>
+        </div>
+      </div>
+      <span class="separator">|</span>
+      <div class="message-container" id="messageContainer">
+        Ready to connect
       </div>
     </div>
 
@@ -122,6 +166,16 @@
       function updateSocketStatus(connected) {
         socketToggle.classList.toggle("active", connected);
         recordingToggle.classList.toggle("active", false);
+        const socketIcon = socketToggle.querySelector("i");
+        if (socketIcon) {
+          socketIcon.className = connected
+            ? "ti ti-plug-connected"
+            : "ti ti-plug-connected-x";
+        }
+        const micIcon = recordingToggle.querySelector("i");
+        if (micIcon) {
+          micIcon.className = "ti ti-microphone-off";
+        }
         showMessage(
           connected ? "Socket connected successfully" : "Socket disconnected"
         );
@@ -165,10 +219,18 @@
           onStartRecord: () => {
             showMessage("Recording started");
             recordingToggle.classList.add("active");
+            const micIcon = recordingToggle.querySelector("i");
+            if (micIcon) {
+              micIcon.className = "ti ti-microphone";
+            }
           },
           onStopRecord: () => {
             showMessage("Recording stopped");
             recordingToggle.classList.remove("active");
+            const micIcon = recordingToggle.querySelector("i");
+            if (micIcon) {
+              micIcon.className = "ti ti-microphone-off";
+            }
           },
         },
       });
@@ -198,9 +260,17 @@
           if (isRecording) {
             client.stopRecording();
             recordingToggle.classList.remove("active");
+            const micIcon = recordingToggle.querySelector("i");
+            if (micIcon) {
+              micIcon.className = "ti ti-microphone-off";
+            }
           } else {
             showMessage("Starting recording...");
             await client.startRecording();
+            const micIcon = recordingToggle.querySelector("i");
+            if (micIcon) {
+              micIcon.className = "ti ti-microphone";
+            }
           }
         } catch (error) {
           showMessage("Recording error: " + error, true);
