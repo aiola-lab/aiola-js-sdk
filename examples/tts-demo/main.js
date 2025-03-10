@@ -1,8 +1,8 @@
 import AiolaTTSClient from "../../libs/tts/dist/esm/index.js";
 
 const client = new AiolaTTSClient({
-  baseUrl: "https://api-testing.internal.aiola.ai",
-  bearer: "fa6a7a103c2b008301088471e7aab343",
+  baseUrl: "<your-base-url>",
+  bearer: "<your-bearer-token>",
 });
 
 const textInput = document.getElementById("textInput");
