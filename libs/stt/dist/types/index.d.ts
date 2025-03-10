@@ -1,24 +1,3 @@
-interface AiolaSocketConfig {
-    baseUrl: string;
-    namespace: string;
-    bearer: string;
-    queryParams: Record<string, string>;
-    micConfig: {
-        sampleRate: number;
-        chunkSize: number;
-        channels: number;
-    };
-    events: {
-        onTranscript: (data: any) => void;
-        onEvents: (data: any) => void;
-        onConnect?: () => void;
-        onStartRecord?: () => void;
-        onStopRecord?: () => void;
-        onKeyWordSet?: (keywords: string[]) => void;
-        onError?: (error: AiolaSocketError) => void;
-    };
-    transports?: "polling" | "websocket" | "all";
-}
 export declare class AiolaStreamingClient {
     private socket;
     private audioContext;
@@ -57,6 +36,33 @@ export declare class AiolaStreamingClient {
     private float32ToInt16;
 }
 /**
+ * Configuration for the aiOla streaming client
+ */
+export interface AiolaSocketConfig {
+    baseUrl: string;
+    namespace: AiolaSocketNamespace;
+    bearer: string;
+    queryParams: Record<string, string>;
+    micConfig?: {
+        sampleRate: number;
+        chunkSize: number;
+        channels: number;
+    };
+    events: {
+        onTranscript: (data: any) => void;
+        onEvents: (data: any) => void;
+        onConnect?: () => void;
+        onStartRecord?: () => void;
+        onStopRecord?: () => void;
+        onKeyWordSet?: (keywords: string[]) => void;
+        onError?: (error: AiolaSocketError) => void;
+    };
+    transports?: "polling" | "websocket" | "all";
+}
+export declare enum AiolaSocketNamespace {
+    EVENTS = "/events"
+}
+/**
  * Custom error codes for aiOla SDK errors
  */
 export declare enum AiolaSocketErrorCode {
@@ -84,4 +90,3 @@ export declare class AiolaSocketError extends Error {
      */
     toJSON(): Record<string, any>;
 }
-export {};

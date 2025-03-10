@@ -21,7 +21,8 @@ export class AiolaStreamingClient {
         this.mediaStream = null;
         this.micSource = null;
         this.activeKeywords = [];
-        this.config = config;
+        // Set default micConfig values if not provided
+        this.config = Object.assign(Object.assign({}, config), { micConfig: Object.assign({ sampleRate: 16000, chunkSize: 4096, channels: 1 }, (config.micConfig || {})) });
     }
     /**
      * Handle error by logging it and emitting the error event
@@ -269,7 +270,7 @@ export class AiolaStreamingClient {
     }
     //---- Private methods ----//
     buildEndpoint() {
-        return `https://api-testing.internal.aiola.ai/events`;
+        return `${this.config.baseUrl}${this.config.namespace}`;
     }
     buildPath() {
         return `/api/voice-streaming/socket.io`;
@@ -282,6 +283,10 @@ export class AiolaStreamingClient {
         return int16Array;
     }
 }
+export var AiolaSocketNamespace;
+(function (AiolaSocketNamespace) {
+    AiolaSocketNamespace["EVENTS"] = "/events";
+})(AiolaSocketNamespace || (AiolaSocketNamespace = {}));
 /**
  * Custom error codes for aiOla SDK errors
  */

@@ -1,27 +1,5 @@
 import { Socket } from "socket.io-client";
 
-interface AiolaSocketConfig {
-  baseUrl: string;
-  namespace: string;
-  bearer: string;
-  queryParams: Record<string, string>;
-  micConfig: {
-    sampleRate: number;
-    chunkSize: number;
-    channels: number;
-  };
-  events: {
-    onTranscript: (data: any) => void;
-    onEvents: (data: any) => void;
-    onConnect?: () => void;
-    onStartRecord?: () => void;
-    onStopRecord?: () => void;
-    onKeyWordSet?: (keywords: string[]) => void;
-    onError?: (error: AiolaSocketError) => void;
-  };
-  transports?: "polling" | "websocket" | "all";
-}
-
 // Handle both Node.js and browser environments
 declare const window: any;
 const getIO = () => {
@@ -37,11 +15,22 @@ export class AiolaStreamingClient {
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private micSource: MediaStreamAudioSourceNode | null = null;
-  private config: AiolaSocketConfig;
+  private config: AiolaSocketConfig & {
+    micConfig: NonNullable<AiolaSocketConfig["micConfig"]>;
+  };
   private activeKeywords: string[] = [];
 
   constructor(config: AiolaSocketConfig) {
-    this.config = config;
+    // Set default micConfig values if not provided
+    this.config = {
+      ...config,
+      micConfig: {
+        sampleRate: 16000,
+        chunkSize: 4096,
+        channels: 1,
+        ...(config.micConfig || {}),
+      },
+    };
   }
 
   /**
@@ -376,7 +365,7 @@ export class AiolaStreamingClient {
   //---- Private methods ----//
 
   private buildEndpoint(): string {
-    return `https://api-testing.internal.aiola.ai/events`;
+    return `${this.config.baseUrl}${this.config.namespace}`;
   }
 
   private buildPath(): string {
@@ -390,6 +379,35 @@ export class AiolaStreamingClient {
     }
     return int16Array;
   }
+}
+
+/**
+ * Configuration for the aiOla streaming client
+ */
+export interface AiolaSocketConfig {
+  baseUrl: string;
+  namespace: AiolaSocketNamespace;
+  bearer: string;
+  queryParams: Record<string, string>;
+  micConfig?: {
+    sampleRate: number;
+    chunkSize: number;
+    channels: number;
+  };
+  events: {
+    onTranscript: (data: any) => void;
+    onEvents: (data: any) => void;
+    onConnect?: () => void;
+    onStartRecord?: () => void;
+    onStopRecord?: () => void;
+    onKeyWordSet?: (keywords: string[]) => void;
+    onError?: (error: AiolaSocketError) => void;
+  };
+  transports?: "polling" | "websocket" | "all";
+}
+
+export enum AiolaSocketNamespace {
+  EVENTS = "/events",
 }
 
 /**

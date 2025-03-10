@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AiolaSocketError = exports.AiolaSocketErrorCode = exports.AiolaStreamingClient = void 0;
+exports.AiolaSocketError = exports.AiolaSocketErrorCode = exports.AiolaSocketNamespace = exports.AiolaStreamingClient = void 0;
 const getIO = () => {
     if (typeof window !== "undefined" && window.io) {
         return window.io;
@@ -24,7 +24,8 @@ class AiolaStreamingClient {
         this.mediaStream = null;
         this.micSource = null;
         this.activeKeywords = [];
-        this.config = config;
+        // Set default micConfig values if not provided
+        this.config = Object.assign(Object.assign({}, config), { micConfig: Object.assign({ sampleRate: 16000, chunkSize: 4096, channels: 1 }, (config.micConfig || {})) });
     }
     /**
      * Handle error by logging it and emitting the error event
@@ -272,7 +273,7 @@ class AiolaStreamingClient {
     }
     //---- Private methods ----//
     buildEndpoint() {
-        return `https://api-testing.internal.aiola.ai/events`;
+        return `${this.config.baseUrl}${this.config.namespace}`;
     }
     buildPath() {
         return `/api/voice-streaming/socket.io`;
@@ -286,6 +287,10 @@ class AiolaStreamingClient {
     }
 }
 exports.AiolaStreamingClient = AiolaStreamingClient;
+var AiolaSocketNamespace;
+(function (AiolaSocketNamespace) {
+    AiolaSocketNamespace["EVENTS"] = "/events";
+})(AiolaSocketNamespace || (exports.AiolaSocketNamespace = AiolaSocketNamespace = {}));
 /**
  * Custom error codes for aiOla SDK errors
  */
