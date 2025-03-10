@@ -3,133 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <title>Aiola STT Demo</title>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
     />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      #transcript {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        min-height: 100px;
-      }
-      .controls {
-        margin: 20px 0;
-      }
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-        margin-right: 10px;
-      }
-      .toggle-container {
-        display: flex;
-        gap: 20px;
-        margin: 20px 0;
-        align-items: flex-end;
-      }
-      .toggle-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 60px;
-      }
-      .separator {
-        color: #ccc;
-        font-size: 20px;
-        line-height: 1;
-        padding: 0 10px;
-      }
-      .toggle-label {
-        color: #666;
-        font-size: 14px;
-        user-select: none;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        width: 100%;
-      }
-      .toggle-label i {
-        font-size: 20px;
-        display: inline-block;
-      }
-      .toggle-button {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 30px;
-        border-radius: 15px;
-        background-color: #bfbfbf;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .toggle-button.active {
-        background-color: #4caf50;
-      }
-      .toggle-button::before {
-        content: "";
-        position: absolute;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        background-color: white;
-        top: 2px;
-        left: 2px;
-        transition: all 0.3s ease;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .toggle-button.active::before {
-        left: 32px;
-      }
-      .toggle-button i {
-        position: absolute;
-        font-size: 14px;
-        color: #666;
-        z-index: 2;
-        top: 50%;
-        transform: translateY(-50%);
-        left: 10px;
-        transition: all 0.3s ease;
-      }
-      .toggle-button.active i {
-        left: 40px;
-        color: #4caf50;
-      }
-      .message-container {
-        margin: 0;
-        padding: 0;
-        min-height: 24px;
-        font-size: 14px;
-        color: #666;
-        flex: 1;
-        display: flex;
-        align-items: flex-end;
-        line-height: 20px;
-      }
-      .message-container span {
-        color: #2e7d32;
-      }
-      .message-container span.error {
-        color: #d32f2f;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Aiola Speech-to-Text Demo</h1>
+    <h1>Aiola Speech-To-Text Demo</h1>
 
     <div class="toggle-container">
       <div class="toggle-group">
@@ -148,19 +32,93 @@
       </div>
     </div>
 
+    <div class="keywords-container">
+      <input
+        type="text"
+        id="keywordsInput"
+        class="keywords-input"
+        placeholder="Enter keywords (comma-separated)"
+      />
+      <button id="setKeywordsButton" class="keywords-button">
+        Set Keywords
+      </button>
+    </div>
+
     <div id="transcript"></div>
 
     <script type="module">
-      import { AiolaStreamingClient } from "/libs/stt/dist/esm/index.js";
+      import {
+        AiolaStreamingClient,
+        AiolaSocketError,
+        AiolaSocketErrorCode,
+      } from "/libs/stt/dist/esm/index.js";
 
       const messageContainer = document.getElementById("messageContainer");
       const socketToggle = document.getElementById("socketToggle");
       const recordingToggle = document.getElementById("recordingToggle");
+      const keywordsInput = document.getElementById("keywordsInput");
+      const setKeywordsButton = document.getElementById("setKeywordsButton");
 
       function showMessage(message, isError = false) {
         messageContainer.innerHTML = `<span class="${
           isError ? "error" : ""
         }">${message}</span>`;
+      }
+
+      function handleError(error, context = "") {
+        console.error(`Error in ${context}:`, error);
+        let errorMessage = error.message || "An unexpected error occurred";
+
+        if (error instanceof AiolaSocketError) {
+          switch (error.code) {
+            case AiolaSocketErrorCode.NETWORK_ERROR:
+              errorMessage = `Network connection error. ${error.message}`;
+              break;
+            case AiolaSocketErrorCode.AUTHENTICATION_ERROR:
+              errorMessage = `Authentication error. ${error.message}`;
+              break;
+            case AiolaSocketErrorCode.MIC_ERROR:
+              errorMessage = `Microphone error. ${error.message}`;
+              break;
+            case AiolaSocketErrorCode.KEYWORDS_ERROR:
+              errorMessage = `Error setting keywords. ${error.message}`;
+              break;
+            case AiolaSocketErrorCode.STREAMING_ERROR:
+              errorMessage = `Streaming error. ${error.message}`;
+              break;
+            default:
+              errorMessage = error.message;
+          }
+
+          showMessage(errorMessage, true);
+
+          // Attempt recovery based on error type
+          switch (error.code) {
+            case AiolaSocketErrorCode.NETWORK_ERROR:
+              // Attempt to reconnect after a delay
+              setTimeout(async () => {
+                if (!socketToggle.classList.contains("active")) {
+                  showMessage("Attempting to reconnect...");
+                  try {
+                    await client.connect();
+                  } catch (reconnectError) {
+                    handleError(reconnectError, "reconnection");
+                  }
+                }
+              }, 5000);
+              break;
+            case AiolaSocketErrorCode.MIC_ERROR:
+              // Reset recording state
+              recordingToggle.classList.remove("active");
+              const micIcon = recordingToggle.querySelector("i");
+              if (micIcon) {
+                micIcon.className = "ti ti-microphone-off";
+              }
+              break;
+          }
+        } else {
+          showMessage(errorMessage, true);
+        }
       }
 
       function updateSocketStatus(connected) {
@@ -210,11 +168,11 @@
           },
           onConnect: () => {
             updateSocketStatus(true);
+            showMessage("Connected successfully");
           },
           onError: (error) => {
-            console.error("Connection error:", error);
+            handleError(error, "connection");
             updateSocketStatus(false);
-            showMessage("Connection error: " + error, true);
           },
           onStartRecord: () => {
             showMessage("Recording started");
@@ -232,10 +190,17 @@
               micIcon.className = "ti ti-microphone-off";
             }
           },
+          onKeyWordSet: (keywords) => {
+            showMessage(`Keywords set successfully: ${keywords.join(", ")}`);
+          },
+          onKeyWordsError: (error) => {
+            handleError(error, "keywords");
+          },
         },
       });
 
       socketToggle.addEventListener("click", async () => {
+        console.log("socketToggle clicked");
         const isConnected = socketToggle.classList.contains("active");
         try {
           if (isConnected) {
@@ -247,10 +212,10 @@
             updateSocketStatus(false);
           } else {
             showMessage("Connecting...");
-            await client.openSocket();
+            await client.connect();
           }
         } catch (error) {
-          showMessage("Connection error: " + error, true);
+          handleError(error, "socket toggle");
         }
       });
 
@@ -273,7 +238,33 @@
             }
           }
         } catch (error) {
-          showMessage("Recording error: " + error, true);
+          handleError(error, "recording toggle");
+        }
+      });
+
+      setKeywordsButton.addEventListener("click", () => {
+        const keywords = keywordsInput.value
+          .split(",")
+          .map((k) => k.trim())
+          .filter((k) => k.length > 0);
+
+        if (keywords.length === 0) {
+          showMessage("Please enter at least one keyword", true);
+          return;
+        }
+
+        try {
+          client.setKeywords(keywords);
+          showMessage(`Keywords set: ${keywords.join(", ")}`);
+        } catch (error) {
+          handleError(error, "keywords");
+        }
+      });
+
+      // Add keyboard support for setting keywords
+      keywordsInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          setKeywordsButton.click();
         }
       });
     </script>

@@ -1,6 +1,6 @@
 import { Socket } from "socket.io-client";
 
-interface AiolaConfig {
+interface AiolaSocketConfig {
   baseUrl: string;
   namespace: string;
   bearer: string;
@@ -14,9 +14,10 @@ interface AiolaConfig {
     onTranscript: (data: any) => void;
     onEvents: (data: any) => void;
     onConnect?: () => void;
-    onError?: (error: Error) => void;
     onStartRecord?: () => void;
     onStopRecord?: () => void;
+    onKeyWordSet?: (keywords: string[]) => void;
+    onError?: (error: AiolaSocketError) => void;
   };
   transports?: "polling" | "websocket" | "all";
 }
@@ -36,13 +37,41 @@ export class AiolaStreamingClient {
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private micSource: MediaStreamAudioSourceNode | null = null;
-  private config: AiolaConfig;
+  private config: AiolaSocketConfig;
+  private activeKeywords: string[] = [];
 
-  constructor(config: AiolaConfig) {
+  constructor(config: AiolaSocketConfig) {
     this.config = config;
   }
 
-  public async openSocket(): Promise<void> {
+  /**
+   * Handle error by logging it and emitting the error event
+   * @param message Error message
+   * @param code Error code
+   * @param details Additional error details
+   */
+  private handleError(
+    message: string,
+    code: AiolaSocketErrorCode = AiolaSocketErrorCode.GENERAL_ERROR,
+    details?: Record<string, any>
+  ): void {
+    const error = new AiolaSocketError(message, code, details);
+    console.error(error.toString());
+    this.config.events.onError?.(error);
+  }
+
+  /**
+   * Get the currently active keywords
+   * @returns The array of active keywords
+   */
+  public getActiveKeywords(): string[] {
+    return [...this.activeKeywords];
+  }
+
+  /**
+   * Connect to the aiOla streaming service
+   */
+  public async connect(): Promise<void> {
     console.log("Opening socket connection");
     const io = getIO();
     const { bearer, transports, events } = this.config;
@@ -76,17 +105,39 @@ export class AiolaStreamingClient {
     });
 
     if (!this.socket) {
-      throw new Error("Failed to initialize socket connection");
+      this.handleError(
+        "Failed to initialize socket connection",
+        AiolaSocketErrorCode.NETWORK_ERROR
+      );
+      return;
     }
 
     this.socket.on("connect", () => {
       console.log("Socket connected");
       events.onConnect?.();
+
+      // If there are active keywords, resend them on reconnection
+      if (this.activeKeywords.length > 0) {
+        this.setKeywords(this.activeKeywords);
+      }
+    });
+
+    this.socket.on("error", (error) => {
+      console.error("Socket error:", error);
+      this.handleError(
+        `Socket error: ${error.message}`,
+        AiolaSocketErrorCode.GENERAL_ERROR,
+        { originalError: error }
+      );
     });
 
     this.socket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
-      events.onError?.(error);
+      this.handleError(
+        `Socket connection error: ${error.message}`,
+        AiolaSocketErrorCode.NETWORK_ERROR,
+        { originalError: error }
+      );
     });
 
     this.socket.on("transcript", events.onTranscript);
@@ -104,7 +155,11 @@ export class AiolaStreamingClient {
 
   public async startRecording(): Promise<void> {
     if (!this.socket?.connected) {
-      throw new Error("Socket is not connected. Please call openSocket first.");
+      this.handleError(
+        "Socket is not connected. Please call connect first.",
+        AiolaSocketErrorCode.MIC_ERROR
+      );
+      return;
     }
 
     console.log("Starting microphone recording");
@@ -112,9 +167,24 @@ export class AiolaStreamingClient {
     try {
       this.config.events.onStartRecord?.();
 
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      this.mediaStream = await navigator.mediaDevices
+        .getUserMedia({
+          audio: true,
+        })
+        .catch((error) => {
+          this.handleError(
+            `Failed to access microphone: ${error.message}`,
+            AiolaSocketErrorCode.MIC_ERROR,
+            { originalError: error }
+          );
+          this.config.events.onStopRecord?.();
+          return null;
+        });
+
+      if (!this.mediaStream) {
+        return;
+      }
+
       this.audioContext = new AudioContext({
         sampleRate: micConfig.sampleRate,
       });
@@ -182,7 +252,13 @@ export class AiolaStreamingClient {
       console.log("Microphone recording started");
     } catch (error) {
       this.config.events.onStopRecord?.();
-      throw error;
+      this.handleError(
+        `Error starting microphone recording: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        AiolaSocketErrorCode.MIC_ERROR,
+        { originalError: error }
+      );
     }
   }
 
@@ -201,32 +277,98 @@ export class AiolaStreamingClient {
       this.mediaStream = null;
       this.audioContext = null;
       console.log("Microphone recording stopped");
+    } catch (error) {
+      this.handleError(
+        `Error stopping microphone recording: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        AiolaSocketErrorCode.MIC_ERROR,
+        { originalError: error }
+      );
     } finally {
       this.config.events.onStopRecord?.();
     }
   }
 
+  /**
+   * Set keywords for speech recognition
+   * @param keywords Array of keywords to listen for
+   * @throws {AiolaSocketError} If keywords are invalid or if there's an error setting them
+   */
   public setKeywords(keywords: string[]): void {
-    if (!this.socket?.connected) {
-      console.error("Socket is not connected. Unable to send keywords.");
+    console.log("setKeywords called with:", keywords);
+    if (!keywords || !Array.isArray(keywords)) {
+      throw new AiolaSocketError(
+        "Keywords must be a valid array",
+        AiolaSocketErrorCode.KEYWORDS_ERROR
+      );
+    }
+
+    const validKeywords = keywords
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+
+    if (validKeywords.length === 0) {
+      throw new AiolaSocketError(
+        "At least one valid keyword must be provided",
+        AiolaSocketErrorCode.KEYWORDS_ERROR
+      );
+    }
+
+    // Store the keywords immediately, they will be the active set whether connected or not
+    this.activeKeywords = validKeywords;
+
+    if (!this.socket || !this.socket.connected) {
+      console.log(
+        "Connection not established. Socket status:",
+        this.socket ? "socket exists but not connected" : "socket is null",
+        "Keywords will be sent when connected."
+      );
       return;
     }
 
     try {
-      const binaryData = JSON.stringify(keywords);
+      const binaryData = new TextEncoder().encode(
+        JSON.stringify(validKeywords)
+      );
+      console.log("Socket is connected, preparing to emit keywords");
+      console.log("Emitting set_keywords event with keywords:", validKeywords);
       this.socket.emit(
         "set_keywords",
         binaryData,
-        (ack: { status: string }) => {
+        (ack: { status: string; error?: string }) => {
+          if (ack?.error) {
+            console.error("Server returned error:", ack.error);
+            this.handleError(
+              `Server error: ${ack.error}`,
+              AiolaSocketErrorCode.KEYWORDS_ERROR
+            );
+            return;
+          }
+
           if (ack?.status === "received") {
-            console.log("Keywords successfully sent.");
-          } else {
-            console.warn("Failed to receive acknowledgment for keywords.");
+            console.log("Keywords successfully sent:", validKeywords);
+            this.config.events.onKeyWordSet?.(validKeywords);
           }
         }
       );
+
+      // Listen for server errors
+      this.socket.once("error", (error: any) => {
+        console.error("Socket error:", error);
+        this.handleError(
+          `Socket error: ${error.message || "Unknown error"}`,
+          AiolaSocketErrorCode.KEYWORDS_ERROR
+        );
+      });
     } catch (error) {
-      console.error("Error emitting keywords:", error);
+      this.handleError(
+        `Error emitting keywords: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        AiolaSocketErrorCode.KEYWORDS_ERROR,
+        { originalError: error }
+      );
       throw error;
     }
   }
@@ -234,16 +376,10 @@ export class AiolaStreamingClient {
   //---- Private methods ----//
 
   private buildEndpoint(): string {
-    // const { /*baseUrl, namespace,*/ queryParams } = this.config;
-    // const queryString = queryParams
-    //   ? new URLSearchParams(queryParams).toString()
-    //   : "";
-    // return `${baseUrl}${namespace}/events${queryString}`;
     return `https://api-testing.internal.aiola.ai/events`;
   }
 
   private buildPath(): string {
-    // const { namespace } = this.config;
     return `/api/voice-streaming/socket.io`;
   }
 
@@ -253,5 +389,60 @@ export class AiolaStreamingClient {
       int16Array[i] = Math.min(1, Math.max(-1, float32Array[i])) * 32767;
     }
     return int16Array;
+  }
+}
+
+/**
+ * Custom error codes for aiOla SDK errors
+ */
+export enum AiolaSocketErrorCode {
+  INVALID_CONFIGURATION = "INVALID_CONFIGURATION",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
+  KEYWORDS_ERROR = "KEYWORDS_ERROR",
+  MIC_ERROR = "MIC_ERROR",
+  STREAMING_ERROR = "STREAMING_ERROR",
+  GENERAL_ERROR = "GENERAL_ERROR",
+}
+
+/**
+ * Custom error class for aiOla SDK
+ */
+export class AiolaSocketError extends Error {
+  public readonly code: AiolaSocketErrorCode;
+  public readonly details?: Record<string, any>;
+
+  constructor(
+    message: string,
+    code: AiolaSocketErrorCode = AiolaSocketErrorCode.GENERAL_ERROR,
+    details?: Record<string, any>
+  ) {
+    super(message);
+    this.name = "AiolaError";
+    this.code = code;
+    this.details = details;
+
+    // Ensure proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, AiolaSocketError.prototype);
+  }
+
+  /**
+   * Creates a string representation of the error including the error code
+   */
+  toString(): string {
+    return `${this.name} [${this.code}]: ${this.message}`;
+  }
+
+  /**
+   * Creates a plain object representation of the error
+   */
+  toJSON(): Record<string, any> {
+    return {
+      name: this.name,
+      message: this.message,
+      code: this.code,
+      details: this.details,
+      stack: this.stack,
+    };
   }
 }
