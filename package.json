@@ -9,7 +9,7 @@
     "type-check": "npm run type-check --workspaces",
     "test": "jest",
     "test:watch": "jest --watch",
-    "serve": "http-server . -p 3000 --cors"
+    "serve": "http-server -p 3000 -S -C examples/ssl.crt -K examples/ssl.key"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",

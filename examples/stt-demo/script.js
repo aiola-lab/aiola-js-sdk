@@ -5,6 +5,14 @@ import {
   AiolaSocketNamespace,
 } from "/libs/stt/dist/esm/index.js";
 
+//FIXME change to PLACEHOLDERs
+const baseUrl = "https://api-testing.internal.aiola.ai";
+const bearer = "fa6a7a103c2b008301088471e7aab343";
+const flowId = "848f4a40-5c3d-481b-a2c6-da0b3d99e7e0";
+const executionId = "1234567890";
+const langCode = "en_US";
+const timeZone = "UTC";
+
 const messageContainer = document.getElementById("messageContainer");
 const socketToggle = document.getElementById("socketToggle");
 const recordingToggle = document.getElementById("recordingToggle");
@@ -92,15 +100,15 @@ function updateSocketStatus(connected) {
 }
 
 const client = new AiolaStreamingClient({
-  baseUrl: "<your-base-url>",
-  bearer: "<your-bearer-token>",
+  baseUrl: baseUrl,
+  bearer: bearer,
   namespace: AiolaSocketNamespace.EVENTS,
   transports: "polling",
   queryParams: {
-    flow_id: "<your-flow-id>",
-    execution_id: "<your-execution-id>",
-    lang_code: "en_US",
-    time_zone: "UTC",
+    flow_id: flowId,
+    execution_id: executionId,
+    lang_code: langCode,
+    time_zone: timeZone,
   },
   events: {
     onTranscript: (data) => {

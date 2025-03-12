@@ -324,6 +324,56 @@ describe("AiolaStreamingClient", () => {
         expect.stringContaining("Error starting microphone recording")
       );
     });
+
+    it("should handle socket connection error and stop recording", async () => {
+      // Start recording first
+      await client.connect();
+      mockSocket.connected = true;
+      await client.startRecording();
+
+      // Spy on stopRecording
+      const stopRecordingSpy = jest.spyOn(client, "stopRecording");
+
+      // Simulate connection error
+      const error = new Error("Connection failed");
+      const connectErrorHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect_error"
+      )[1];
+      connectErrorHandler(error);
+
+      expect(stopRecordingSpy).toHaveBeenCalled();
+      expect(client["config"].events.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: AiolaSocketErrorCode.NETWORK_ERROR,
+          message: expect.stringContaining("Socket connection error"),
+        })
+      );
+    });
+
+    it("should handle general socket error and stop recording", async () => {
+      // Start recording first
+      await client.connect();
+      mockSocket.connected = true;
+      await client.startRecording();
+
+      // Spy on stopRecording
+      const stopRecordingSpy = jest.spyOn(client, "stopRecording");
+
+      // Simulate socket error
+      const error = new Error("Socket error occurred");
+      const errorHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "error"
+      )[1];
+      errorHandler(error);
+
+      expect(stopRecordingSpy).toHaveBeenCalled();
+      expect(client["config"].events.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: AiolaSocketErrorCode.GENERAL_ERROR,
+          message: expect.stringContaining("Socket error"),
+        })
+      );
+    });
   });
 
   describe("stopRecording", () => {
