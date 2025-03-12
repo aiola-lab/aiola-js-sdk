@@ -6,12 +6,12 @@ import {
 } from "/libs/stt/dist/esm/index.js";
 
 //FIXME change to PLACEHOLDERs
-const baseUrl = "https://api-testing.internal.aiola.ai";
-const bearer = "fa6a7a103c2b008301088471e7aab343";
-const flowId = "848f4a40-5c3d-481b-a2c6-da0b3d99e7e0";
-const executionId = "1234567890";
-const langCode = "en_US";
-const timeZone = "UTC";
+const baseUrl = "<your-base-url>";
+const bearer = "<your-bearer-token>";
+const flowId = "<your-flow-id>";
+const executionId = "<your-execution-id>";
+const langCode = "<your-language-code>";
+const timeZone = "<your-time-zone>";
 
 const messageContainer = document.getElementById("messageContainer");
 const socketToggle = document.getElementById("socketToggle");
