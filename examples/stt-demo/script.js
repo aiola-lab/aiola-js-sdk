@@ -5,7 +5,6 @@ import {
   AiolaSocketNamespace,
 } from "/libs/stt/dist/esm/index.js";
 
-//FIXME change to PLACEHOLDERs
 const baseUrl = "<your-base-url>";
 const bearer = "<your-bearer-token>";
 const flowId = "<your-flow-id>";
