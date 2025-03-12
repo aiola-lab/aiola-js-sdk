@@ -143,6 +143,9 @@ npm install
 npm run build
 ```
 
+### run example apps
+run ```npm run serve``` from the root and navigate to ```examples``` and navigate to wanted example
+
 ### Type checking
 
 ```bash

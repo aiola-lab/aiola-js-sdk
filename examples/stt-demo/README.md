@@ -39,10 +39,7 @@ This is a demonstration application showcasing the Aiola Speech-to-Text capabili
    });
    ```
 
-3. Serve the files using a web server. You can use any of these methods:
-   - Python: `python -m http.server`
-   - Node.js: `npx serve`
-   - PHP: `php -S localhost:8000`
+3. run ```npm run serve``` from the root and navigate to ```examples/stt-demo/```
 
 ## Usage
 

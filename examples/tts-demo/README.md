@@ -43,7 +43,7 @@ const client = new AiolaTTSClient({
 
 ## Usage
 
-1. Start your web server (you can use any static file server)
+1. run ```npm run serve``` from the root and navigate to ```examples/tts-demo/```
 2. Open the demo in your web browser
 3. Enter the text you want to convert to speech
 4. Select a voice from the dropdown menu
