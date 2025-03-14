@@ -93,6 +93,8 @@ interface AiolaSocketConfig {
 
 ### Text-to-Speech (TTS)
 
+Current SDK Version: 0.1.0
+
 ```bash
 npm install @aiola-js-sdk/tts
 ```
@@ -100,16 +102,11 @@ npm install @aiola-js-sdk/tts
 ```typescript
 import AiolaTTSClient from "@aiola-js-sdk/tts";
 
+// First create the client
 const client = new AiolaTTSClient({
   baseUrl: "https://your-aiola-endpoint.com",
   bearer: "your-auth-token",
 });
-
-// Synthesize speech and get audio buffer
-const audioBuffer = await client.synthesizeSpeech("Hello, world!", "af_bella");
-
-// Or stream the audio
-const audioStream = await client.streamSpeech("Hello, world!", "af_nicole");
 
 // Get available voices
 const voices = client.getVoices();
@@ -127,6 +124,47 @@ const voices = client.getVoices();
 //   George: "bm_george",
 //   Lewis: "bm_lewis"
 // }
+
+// Create a client with default voice using getVoices()
+const clientWithDefault = new AiolaTTSClient({
+  baseUrl: "https://your-aiola-endpoint.com",
+  bearer: "your-auth-token",
+  defaultVoice: voices.Default, // Using the Default voice from getVoices()
+});
+
+// Synthesize speech and get audio as a Blob
+// Voice can be provided in the method call or will use defaultVoice from config
+const audioBlob = await clientWithDefault.synthesizeSpeech(
+  "Hello, world!",
+  voices.Bella
+);
+
+// Using defaultVoice from config
+const audioBlob2 = await clientWithDefault.synthesizeSpeech("Hello, world!");
+
+// If neither voice parameter nor defaultVoice is provided, an error will be thrown
+const clientWithoutDefault = new AiolaTTSClient({
+  baseUrl: "https://your-aiola-endpoint.com",
+  bearer: "your-auth-token",
+});
+// This will throw: "Voice is required for synthesis"
+await clientWithoutDefault.synthesizeSpeech("Hello, world!");
+
+// Stream the audio (also returns a Blob)
+const streamBlob = await clientWithDefault.streamSpeech(
+  "Hello, world!",
+  voices.Nicole
+);
+```
+
+#### TTSConfig Interface
+
+```typescript
+interface TTSConfig {
+  baseUrl: string; // The base URL of the Aiola API
+  bearer: string; // Authentication token
+  defaultVoice?: string; // Optional default voice. If not provided, voice must be specified in method calls
+}
 ```
 
 ## Development
@@ -143,8 +181,16 @@ npm install
 npm run build
 ```
 
-### run example apps
-run ```npm run serve``` from the root and navigate to ```examples``` and navigate to wanted example
+### Run example apps
+
+
+From the root 
+
+```bash 
+npm run serve
+```  
+
+And navigate to ```examples``` and navigate to wanted example
 
 ### Type checking
 
@@ -155,3 +201,7 @@ npm run type-check
 ## License
 
 ISC
+
+```
+
+```

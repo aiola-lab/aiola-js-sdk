@@ -66,18 +66,29 @@ describe("AiolaTTSClient", () => {
         "Invalid request"
       );
     });
+
+    it("should throw error when neither voice nor defaultVoice is provided", async () => {
+      const clientWithoutDefaultVoice = new AiolaTTSClient({
+        baseUrl: mockConfig.baseUrl,
+        bearer: mockConfig.bearer,
+      });
+
+      await expect(
+        clientWithoutDefaultVoice.synthesizeSpeech("Hello world")
+      ).rejects.toThrow("Voice is required for synthesis");
+    });
   });
 
   describe("streamSpeech", () => {
     it("should make correct API call for speech streaming", async () => {
-      const mockStream = new ReadableStream();
+      const mockBlob = new Blob(["mock audio data"], { type: "audio/wav" });
       const mockResponse = {
         ok: true,
         status: 200,
         headers: new Headers(),
-        blob: () => Promise.resolve(new Blob()),
+        blob: () => Promise.resolve(mockBlob),
         json: () => Promise.resolve({}),
-        body: mockStream,
+        body: mockBlob,
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
@@ -95,7 +106,8 @@ describe("AiolaTTSClient", () => {
         })
       );
 
-      expect(result).toBeInstanceOf(ReadableStream);
+      expect(result).toBeInstanceOf(Blob);
+      expect(result).toBe(mockBlob);
     });
 
     it("should throw error when API call fails", async () => {
@@ -118,8 +130,6 @@ describe("AiolaTTSClient", () => {
         ok: true,
         status: 200,
         headers: new Headers(),
-        blob: () => Promise.resolve(new Blob()),
-        json: () => Promise.resolve({}),
         body: null,
       };
       (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
@@ -127,6 +137,17 @@ describe("AiolaTTSClient", () => {
       await expect(client.streamSpeech("Hello world")).rejects.toThrow(
         "Response body is null"
       );
+    });
+
+    it("should throw error when neither voice nor defaultVoice is provided", async () => {
+      const clientWithoutDefaultVoice = new AiolaTTSClient({
+        baseUrl: mockConfig.baseUrl,
+        bearer: mockConfig.bearer,
+      });
+
+      await expect(
+        clientWithoutDefaultVoice.streamSpeech("Hello world")
+      ).rejects.toThrow("Voice is required for streaming");
     });
   });
 });

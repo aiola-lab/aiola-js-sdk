@@ -1,8 +1,8 @@
 import AiolaTTSClient from "../../libs/tts/dist/esm/index.js";
 
 const client = new AiolaTTSClient({
-  baseUrl: "<your-base-url>",
-  bearer: "<your-bearer-token>",
+  baseUrl: "https://api-testing.internal.aiola.ai",
+  bearer: "fa6a7a103c2b008301088471e7aab343",
 });
 
 const textInput = document.getElementById("textInput");
@@ -26,9 +26,10 @@ synthesizeBtn.addEventListener("click", async () => {
     const voice = voiceSelect.value;
 
     synthesizeBtn.disabled = true;
-    const audioBuffer = await client.synthesizeSpeech(text, voice);
+    // const audioBuffer = await client.synthesizeSpeech(text, voice);
 
-    const blob = new Blob([audioBuffer], { type: "audio/wav" });
+    // const blob = new Blob([audioBuffer], { type: "audio/wav" });
+    const blob = await client.synthesizeSpeech(text, voice);
     const url = URL.createObjectURL(blob);
 
     audioPlayer.src = url;

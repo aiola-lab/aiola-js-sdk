@@ -14,27 +14,29 @@ export default class AiolaTTSClient {
     console.log(`AiolaTTSClient SDK Version: ${SDK_VERSION}`);
   }
 
-  public async synthesizeSpeech(
-    text: string,
-    voice?: string
-  ): Promise<ArrayBuffer> {
+  public async synthesizeSpeech(text: string, voice?: string): Promise<Blob> {
     if (!text || text.trim().length === 0) {
       throw new Error("Text is required for synthesis");
     }
 
-    const payload = { text, voice };
+    if (!voice && !this.config.defaultVoice) {
+      throw new Error("Voice is required for synthesis");
+    }
+
+    const payload = { text, voice: voice || this.config.defaultVoice };
     return await this.request("synthesize", payload);
   }
 
-  public async streamSpeech(
-    text: string,
-    voice?: string
-  ): Promise<ReadableStream<Uint8Array>> {
+  public async streamSpeech(text: string, voice?: string): Promise<Blob> {
     if (!text || text.trim().length === 0) {
       throw new Error("Text is required for synthesis");
     }
 
-    const payload = { text, voice };
+    if (!voice && !this.config.defaultVoice) {
+      throw new Error("Voice is required for streaming");
+    }
+
+    const payload = { text, voice: voice || this.config.defaultVoice };
     return await this.request("synthesize/stream", payload);
   }
 
@@ -42,7 +44,7 @@ export default class AiolaTTSClient {
    * Helper method to make API requests.
    * @param {string} endpoint - The API endpoint to call.
    * @param {Object} data - The payload for the request.
-   * @returns {Promise<Object>} - The API response.
+   * @returns {Promise<Blob>} - The API response.
    */
   async request(endpoint: string, data: any) {
     try {
@@ -67,15 +69,14 @@ export default class AiolaTTSClient {
       }
 
       if (endpoint === "synthesize") {
-        if (response.headers.get("Content-Type")?.includes("audio/wav")) {
-          return await response.blob();
-        }
-        throw new Error("Invalid response type for synthesis");
+        return await response.blob();
       } else if (endpoint === "synthesize/stream") {
         if (!response.body) {
           throw new Error("Response body is null");
         }
-        return response.body;
+        return response.body instanceof Blob
+          ? response.body
+          : await response.blob();
       }
 
       return await response.json();
