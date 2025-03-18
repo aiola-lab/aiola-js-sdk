@@ -134,7 +134,7 @@ describe("AiolaStreamingClient", () => {
       // Mock io to return null
       (require("socket.io-client") as any).io.mockReturnValueOnce(null);
 
-      await client.connect();
+      client.connect();
 
       expect(client["config"].events.onError).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -144,8 +144,94 @@ describe("AiolaStreamingClient", () => {
       );
     });
 
+    it("should call onConnect with websocket transport when using websocket", () => {
+      // Mock the socket's transport name
+      mockSocket.io = {
+        engine: {
+          transport: {
+            name: "websocket",
+          },
+        },
+      };
+
+      client.connect();
+
+      // Simulate connection
+      const connectHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect"
+      )[1];
+      connectHandler();
+
+      expect(client["config"].events.onConnect).toHaveBeenCalledWith(
+        "websocket"
+      );
+    });
+
+    it("should call onConnect with polling transport when using polling", () => {
+      // Mock the socket's transport name
+      mockSocket.io = {
+        engine: {
+          transport: {
+            name: "polling",
+          },
+        },
+      };
+
+      client.connect();
+
+      // Simulate connection
+      const connectHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect"
+      )[1];
+      connectHandler();
+
+      expect(client["config"].events.onConnect).toHaveBeenCalledWith("polling");
+    });
+
+    it("should call onConnect with polling transport when websocket upgrade fails", () => {
+      // Create a new client with websocket transport configured
+      const websocketClient = new AiolaStreamingClient({
+        baseUrl: "https://test.com",
+        namespace: AiolaSocketNamespace.EVENTS,
+        bearer: "test-token",
+        queryParams: {},
+        transports: "websocket",
+        events: {
+          onTranscript: jest.fn(),
+          onEvents: jest.fn(),
+          onConnect: jest.fn(),
+          onError: jest.fn(),
+          onStartRecord: jest.fn(),
+          onStopRecord: jest.fn(),
+          onKeyWordSet: jest.fn(),
+        },
+      });
+
+      // Mock the socket's transport name to simulate websocket upgrade failure
+      mockSocket.io = {
+        engine: {
+          transport: {
+            name: "polling", // Even though websocket was requested, it fell back to polling
+          },
+        },
+      };
+
+      websocketClient.connect();
+
+      // Simulate connection
+      const connectHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect"
+      )[1];
+      connectHandler();
+
+      // Should still call onConnect with the actual transport being used (polling)
+      expect(websocketClient["config"].events.onConnect).toHaveBeenCalledWith(
+        "polling"
+      );
+    });
+
     it("should handle socket connection error", async () => {
-      await client.connect();
+      client.connect();
 
       // Simulate connection error
       const error = new Error("Connection failed");
@@ -188,7 +274,7 @@ describe("AiolaStreamingClient", () => {
       mockAudioContext.createMediaStreamSource.mockReturnValue(mockMicSource);
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       await client.startRecording();
@@ -223,7 +309,7 @@ describe("AiolaStreamingClient", () => {
       mockGetUserMedia.mockRejectedValueOnce(error);
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       await client.startRecording();
@@ -249,7 +335,7 @@ describe("AiolaStreamingClient", () => {
       mockAudioContext.createMediaStreamSource.mockReturnValue(mockMicSource);
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       // First cycle
@@ -281,7 +367,7 @@ describe("AiolaStreamingClient", () => {
       });
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       await client.startRecording();
@@ -307,7 +393,7 @@ describe("AiolaStreamingClient", () => {
       });
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       await client.startRecording();
@@ -327,7 +413,7 @@ describe("AiolaStreamingClient", () => {
 
     it("should handle socket connection error and stop recording", async () => {
       // Start recording first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
       await client.startRecording();
 
@@ -352,7 +438,7 @@ describe("AiolaStreamingClient", () => {
 
     it("should handle general socket error and stop recording", async () => {
       // Start recording first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
       await client.startRecording();
 
@@ -386,7 +472,7 @@ describe("AiolaStreamingClient", () => {
       mockAudioContext.createMediaStreamSource.mockReturnValue(mockMicSource);
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       await client.startRecording();
@@ -405,7 +491,7 @@ describe("AiolaStreamingClient", () => {
       });
 
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       // Start recording to set up the audio context
@@ -431,7 +517,7 @@ describe("AiolaStreamingClient", () => {
   describe("closeSocket", () => {
     it("should disconnect socket", async () => {
       // Connect socket first
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       client.closeSocket();
@@ -443,9 +529,16 @@ describe("AiolaStreamingClient", () => {
 
   describe("setKeywords", () => {
     it("should throw KEYWORDS_ERROR for invalid input", () => {
-      expect(() => client.setKeywords([])).toThrow(AiolaSocketError);
-      expect(() => client.setKeywords([])).toThrow(
-        "At least one valid keyword must be provided"
+      expect(() => client.setKeywords(null as any)).toThrow(AiolaSocketError);
+      expect(() => client.setKeywords(null as any)).toThrow(
+        "Keywords must be a valid array"
+      );
+
+      expect(() => client.setKeywords(undefined as any)).toThrow(
+        AiolaSocketError
+      );
+      expect(() => client.setKeywords(undefined as any)).toThrow(
+        "Keywords must be a valid array"
       );
 
       expect(() => client.setKeywords([""])).toThrow(AiolaSocketError);
@@ -454,8 +547,58 @@ describe("AiolaStreamingClient", () => {
       );
     });
 
+    it("should clear keywords when empty array is provided", () => {
+      // First set some keywords
+      client.setKeywords(["test", "keywords"]);
+      expect(client.getActiveKeywords()).toEqual(["test", "keywords"]);
+
+      // Now clear them
+      client.setKeywords([]);
+      expect(client.getActiveKeywords()).toEqual([]);
+    });
+
+    it("should emit empty keywords to server when clearing keywords and socket is connected", () => {
+      client.connect();
+      mockSocket.connected = true;
+
+      // Clear keywords
+      client.setKeywords([]);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        "set_keywords",
+        expect.any(Uint8Array),
+        expect.any(Function)
+      );
+
+      // Simulate successful response
+      const callback = mockSocket.emit.mock.calls[0][2];
+      callback({ status: "received" });
+
+      expect(client["config"].events.onKeyWordSet).toHaveBeenCalledWith([]);
+      expect(client["config"].events.onError).not.toHaveBeenCalled();
+    });
+
+    it("should handle server error when clearing keywords", () => {
+      client.connect();
+      mockSocket.connected = true;
+
+      // Clear keywords
+      client.setKeywords([]);
+
+      // Simulate error response
+      const callback = mockSocket.emit.mock.calls[0][2];
+      callback({ error: "Failed to clear keywords" });
+
+      expect(client["config"].events.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: AiolaSocketErrorCode.KEYWORDS_ERROR,
+          message: expect.stringContaining("Failed to clear keywords"),
+        })
+      );
+    });
+
     it("should emit keywords when socket is connected", async () => {
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       const keywords = ["test", "keywords"];
@@ -477,7 +620,7 @@ describe("AiolaStreamingClient", () => {
     });
 
     it("should handle successful keyword setting", async () => {
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       const keywords = ["test", "keywords"];
@@ -494,7 +637,7 @@ describe("AiolaStreamingClient", () => {
     });
 
     it("should handle keyword setting failure", async () => {
-      await client.connect();
+      client.connect();
       mockSocket.connected = true;
 
       const keywords = ["test", "keywords"];
@@ -516,7 +659,7 @@ describe("AiolaStreamingClient", () => {
       const keywords = ["test", "keywords"];
       client.setKeywords(keywords);
 
-      await client.connect();
+      client.connect();
 
       // Simulate connection
       const connectHandler = mockSocket.on.mock.calls.find(

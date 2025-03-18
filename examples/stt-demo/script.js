@@ -3,14 +3,14 @@ import {
   AiolaSocketError,
   AiolaSocketErrorCode,
   AiolaSocketNamespace,
-} from "/libs/stt/dist/esm/index.js";
+} from "/libs/stt/dist/bundle/index.js";
 
-const baseUrl = "<your-base-url>";
-const bearer = "<your-bearer-token>";
-const flowId = "<your-flow-id>";
-const executionId = "<your-execution-id>";
-const langCode = "<your-language-code>";
-const timeZone = "<your-time-zone>";
+const baseUrl = "https://api-testing.internal.aiola.ai";
+const bearer = "fa6a7a103c2b008301088471e7aab343";
+const flowId = "848f4a40-5c3d-481b-a2c6-da0b3d99e7e0";
+const executionId = "3344";
+const langCode = "en_US";
+const timeZone = "Asia/Jerusalem";
 
 const messageContainer = document.getElementById("messageContainer");
 const socketToggle = document.getElementById("socketToggle");
@@ -102,7 +102,7 @@ const client = new AiolaStreamingClient({
   baseUrl: baseUrl,
   bearer: bearer,
   namespace: AiolaSocketNamespace.EVENTS,
-  transports: "polling",
+  transports: "websocket",
   queryParams: {
     flow_id: flowId,
     execution_id: executionId,
@@ -167,7 +167,7 @@ socketToggle.addEventListener("click", async () => {
       updateSocketStatus(false);
     } else {
       showMessage("Connecting...");
-      await client.connect();
+      client.connect(true);
     }
   } catch (error) {
     handleError(error, "socket toggle");
@@ -202,11 +202,6 @@ setKeywordsButton.addEventListener("click", () => {
     .split(",")
     .map((k) => k.trim())
     .filter((k) => k.length > 0);
-
-  if (keywords.length === 0) {
-    showMessage("Please enter at least one keyword", true);
-    return;
-  }
 
   try {
     client.setKeywords(keywords);

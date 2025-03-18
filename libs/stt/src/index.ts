@@ -1,14 +1,4 @@
-import { Socket } from "socket.io-client";
-
-// Handle both Node.js and browser environments
-declare const window: any;
-const getIO = () => {
-  if (typeof window !== "undefined" && window.io) {
-    return window.io;
-  }
-  // For Node.js environment
-  return require("socket.io-client").io;
-};
+import { Socket, io } from "socket.io-client";
 
 export class AiolaStreamingClient {
   private socket: Socket | null = null;
@@ -60,17 +50,11 @@ export class AiolaStreamingClient {
   /**
    * Connect to the aiOla streaming service
    */
-  public async connect(): Promise<void> {
-    console.log("Opening socket connection");
-    const io = getIO();
+  public connect(autoRecord = false): void {
     const { bearer, transports, events } = this.config;
     const _bearer = `Bearer ${bearer}`;
     const _transports =
-      transports === "polling"
-        ? ["polling"]
-        : transports === "websocket"
-        ? ["websocket"]
-        : ["polling", "websocket"];
+      transports === "polling" ? ["polling"] : ["polling", "websocket"];
 
     this.socket = io(this.buildEndpoint(), {
       withCredentials: true,
@@ -79,10 +63,6 @@ export class AiolaStreamingClient {
         ...this.config.queryParams,
       },
       transports: _transports,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000,
       transportOptions: {
         polling: {
           extraHeaders: { Authorization: _bearer },
@@ -102,8 +82,17 @@ export class AiolaStreamingClient {
     }
 
     this.socket.on("connect", () => {
-      console.log("Socket connected");
-      events.onConnect?.();
+      const transportName = this.socket?.io?.engine?.transport?.name;
+
+      if (transportName === "polling" || transportName === "websocket") {
+        events.onConnect?.(transportName);
+      } else {
+        console.warn("Unexpected transport name:", transportName);
+      }
+
+      if (autoRecord) {
+        this.startRecording();
+      }
 
       // If there are active keywords, resend them on reconnection
       if (this.activeKeywords.length > 0) {
@@ -131,17 +120,15 @@ export class AiolaStreamingClient {
       );
     });
 
-    this.socket.on("transcript", events.onTranscript);
-    this.socket.on("events", events.onEvents);
+    this.socket.on("transcript", events.onTranscript ?? (() => {}));
+    this.socket.on("events", events.onEvents ?? (() => {}));
   }
 
   public closeSocket(): void {
-    console.log("Closing socket connection");
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
-    console.log("Socket connection closed");
   }
 
   public async startRecording(): Promise<void> {
@@ -153,7 +140,6 @@ export class AiolaStreamingClient {
       return;
     }
 
-    console.log("Starting microphone recording");
     const { micConfig } = this.config;
     try {
       this.config.events.onStartRecord?.();
@@ -240,7 +226,6 @@ export class AiolaStreamingClient {
       };
 
       this.micSource.connect(audioWorkletNode);
-      console.log("Microphone recording started");
     } catch (error) {
       this.config.events.onStopRecord?.();
       this.handleError(
@@ -254,7 +239,6 @@ export class AiolaStreamingClient {
   }
 
   public stopRecording(): void {
-    console.log("Stopping microphone recording");
     try {
       if (this.micSource) this.micSource.disconnect();
       if (this.mediaStream) {
@@ -267,7 +251,6 @@ export class AiolaStreamingClient {
       this.micSource = null;
       this.mediaStream = null;
       this.audioContext = null;
-      console.log("Microphone recording stopped");
     } catch (error) {
       this.handleError(
         `Error stopping microphone recording: ${
@@ -287,12 +270,36 @@ export class AiolaStreamingClient {
    * @throws {AiolaSocketError} If keywords are invalid or if there's an error setting them
    */
   public setKeywords(keywords: string[]): void {
-    console.log("setKeywords called with:", keywords);
-    if (!keywords || !Array.isArray(keywords)) {
+    if (!Array.isArray(keywords)) {
       throw new AiolaSocketError(
         "Keywords must be a valid array",
         AiolaSocketErrorCode.KEYWORDS_ERROR
       );
+    }
+
+    // Allow empty array to clear keywords
+    if (keywords.length === 0) {
+      this.activeKeywords = [];
+      if (this.socket?.connected) {
+        this.socket.emit(
+          "set_keywords",
+          new Uint8Array(),
+          (ack: { status: string; error?: string }) => {
+            if (ack?.error) {
+              console.error("Server returned error:", ack.error);
+              this.handleError(
+                `Server error: ${ack.error}`,
+                AiolaSocketErrorCode.KEYWORDS_ERROR
+              );
+              return;
+            }
+            if (ack?.status === "received") {
+              this.config.events.onKeyWordSet?.([]);
+            }
+          }
+        );
+      }
+      return;
     }
 
     const validKeywords = keywords
@@ -310,11 +317,6 @@ export class AiolaStreamingClient {
     this.activeKeywords = validKeywords;
 
     if (!this.socket || !this.socket.connected) {
-      console.log(
-        "Connection not established. Socket status:",
-        this.socket ? "socket exists but not connected" : "socket is null",
-        "Keywords will be sent when connected."
-      );
       return;
     }
 
@@ -322,8 +324,6 @@ export class AiolaStreamingClient {
       const binaryData = new TextEncoder().encode(
         JSON.stringify(validKeywords)
       );
-      console.log("Socket is connected, preparing to emit keywords");
-      console.log("Emitting set_keywords event with keywords:", validKeywords);
       this.socket.emit(
         "set_keywords",
         binaryData,
@@ -338,7 +338,6 @@ export class AiolaStreamingClient {
           }
 
           if (ack?.status === "received") {
-            console.log("Keywords successfully sent:", validKeywords);
             this.config.events.onKeyWordSet?.(validKeywords);
           }
         }
@@ -397,9 +396,9 @@ export interface AiolaSocketConfig {
     channels: number;
   };
   events: {
-    onTranscript: (data: any) => void;
-    onEvents: (data: any) => void;
-    onConnect?: () => void;
+    onTranscript?: (data: any) => void;
+    onEvents?: (data: any) => void;
+    onConnect?: (transportProtocolName: "polling" | "websocket") => void;
     onStartRecord?: () => void;
     onStopRecord?: () => void;
     onKeyWordSet?: (keywords: string[]) => void;

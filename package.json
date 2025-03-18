@@ -9,7 +9,9 @@
     "type-check": "npm run type-check --workspaces",
     "test": "jest",
     "test:watch": "jest --watch",
-    "serve": "http-server -p 3000 -S -C examples/ssl.crt -K examples/ssl.key"
+    "serve": "http-server -p 3000 -S -C examples/ssl.crt -K examples/ssl.key",
+    "reinstall": "npm rm -rf node_modules && npm i",
+    "clb": "npm run reinstall && npm run build"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
