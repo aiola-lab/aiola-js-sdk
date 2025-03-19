@@ -111,6 +111,7 @@ const client = new AiolaStreamingClient({
   },
   events: {
     onTranscript: (data) => {
+      console.log("onTranscript callback called");
       console.log("Transcript:", data.transcript);
       const transcriptDiv = document.getElementById("transcript");
       const newTranscript = document.createElement("div");
@@ -119,17 +120,21 @@ const client = new AiolaStreamingClient({
       transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
     },
     onEvents: (data) => {
+      console.log("onEvents callback called");
       console.log("Event:", data);
     },
     onConnect: () => {
+      console.log("onConnect callback called");
       updateSocketStatus(true);
       showMessage("Connected successfully");
     },
     onError: (error) => {
+      console.log("onError callback called");
       handleError(error, "connection");
       updateSocketStatus(false);
     },
     onStartRecord: () => {
+      console.log("onStartRecord callback called");
       showMessage("Recording started");
       recordingToggle.classList.add("active");
       const micIcon = recordingToggle.querySelector("i");
@@ -138,6 +143,7 @@ const client = new AiolaStreamingClient({
       }
     },
     onStopRecord: () => {
+      console.log("onStopRecord callback called");
       showMessage("Recording stopped");
       recordingToggle.classList.remove("active");
       const micIcon = recordingToggle.querySelector("i");
@@ -146,9 +152,11 @@ const client = new AiolaStreamingClient({
       }
     },
     onKeyWordSet: (keywords) => {
+      console.log("onKeyWordSet callback called");
       showMessage(`Keywords set successfully: ${keywords.join(", ")}`);
     },
     onKeyWordsError: (error) => {
+      console.log("onKeyWordsError callback called");
       handleError(error, "keywords");
     },
   },

@@ -40,10 +40,23 @@ const client = new AiolaStreamingClient({
     onEvents: (data) => {
       console.log("Event:", data);
     },
+    onError: (error) => {
+      console.error("Error:", error);
+    },
+    onStartRecord: () => {
+      console.log("Recording started");
+    },
+    onStopRecord: () => {
+      console.log("Recording stopped");
+    },
   },
 });
 
-await client.startStreaming();
+// Connect to the service
+client.connect();
+
+// Or connect and start recording automatically
+client.connect(true);
 ```
 
 ### Configuration Reference
@@ -82,10 +95,10 @@ interface AiolaSocketConfig {
     onTranscript: (data: any) => void; // Called when transcript is received
     onEvents: (data: any) => void; // Called for other events
     onConnect?: () => void; // Called when connected
-    onStartRecord?: () => void; // Called when recording starts
-    onStopRecord?: () => void; // Called when recording stops
+    onStartRecord?: () => void; // Called when recording starts (only after permissions are granted)
+    onStopRecord?: () => void; // Called when recording stops (only if recording was started)
     onKeyWordSet?: (keywords: string[]) => void; // Called when keywords are set
-    onError?: (error: AiolaSocketError) => void; // Called on errors
+    onError?: (error: AiolaSocketError) => void; // Called on errors, including permission denied
   };
   transports?: "polling" | "websocket" | "all"; // Transport method to use
 }
@@ -183,14 +196,13 @@ npm run build
 
 ### Run example apps
 
+From the root
 
-From the root 
-
-```bash 
+```bash
 npm run serve
-```  
+```
 
-And navigate to ```examples``` and navigate to wanted example
+And navigate to `examples` and navigate to wanted example
 
 ### Type checking
 
@@ -201,6 +213,72 @@ npm run type-check
 ## License
 
 ISC
+
+### Connection and Recording
+
+The STT client provides two ways to start recording:
+
+1. Manual start:
+
+```typescript
+// First connect
+client.connect();
+
+// Then start recording when ready
+await client.startRecording();
+```
+
+2. Automatic start:
+
+```typescript
+// Connect and start recording automatically after connection
+client.connect(true);
+```
+
+When using automatic recording (`autoRecord = true`):
+
+- Recording will start automatically after connection is established
+- Microphone permissions will be requested immediately after connection
+- All permission handling and error events will work the same as with manual recording
+
+### Permission Handling
+
+The STT client handles microphone permissions as follows:
+
+1. When `startStreaming()` is called, the client will request microphone permissions from the user
+2. If permissions are granted:
+   - `onStartRecord` event is called
+   - Recording begins
+3. If permissions are denied:
+   - `onError` event is called with `AiolaSocketErrorCode.MIC_ERROR`
+   - No recording events (`onStartRecord`, `onStopRecord`) are emitted
+   - No audio resources are initialized
+
+### Methods
+
+#### connect(autoRecord?: boolean)
+
+Connects to the aiOla streaming service.
+
+- `autoRecord`: Optional boolean parameter. If `true`, recording will start automatically after connection is established. Default is `false`.
+
+#### startRecording()
+
+Starts recording audio from the microphone. Must be called after `connect()` unless `autoRecord` was set to `true`.
+
+#### stopRecording()
+
+Stops recording audio and releases microphone resources.
+
+#### closeSocket()
+
+Disconnects from the aiOla streaming service.
+
+#### setKeywords(keywords: string[])
+
+Sets keywords for speech recognition.
+
+- `keywords`: Array of strings to listen for. Pass an empty array to clear keywords.
 
 ```
 

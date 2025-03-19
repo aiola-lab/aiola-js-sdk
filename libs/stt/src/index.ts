@@ -142,8 +142,6 @@ export class AiolaStreamingClient {
 
     const { micConfig } = this.config;
     try {
-      this.config.events.onStartRecord?.();
-
       this.mediaStream = await navigator.mediaDevices
         .getUserMedia({
           audio: true,
@@ -154,13 +152,13 @@ export class AiolaStreamingClient {
             AiolaSocketErrorCode.MIC_ERROR,
             { originalError: error }
           );
-          this.config.events.onStopRecord?.();
           return null;
         });
 
       if (!this.mediaStream) {
         return;
       }
+      this.config.events.onStartRecord?.();
 
       this.audioContext = new AudioContext({
         sampleRate: micConfig.sampleRate,

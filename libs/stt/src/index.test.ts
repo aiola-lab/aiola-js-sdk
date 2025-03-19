@@ -144,6 +144,48 @@ describe("AiolaStreamingClient", () => {
       );
     });
 
+    it("should start recording automatically when autoRecord is true", async () => {
+      // Connect with autoRecord set to true
+      client.connect(true);
+
+      // Simulate successful connection
+      mockSocket.connected = true;
+      const connectCallback = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect"
+      )[1];
+      await connectCallback();
+
+      // Wait for any async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify that getUserMedia was called
+      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+
+      // Verify that onStartRecord was called
+      expect(client["config"].events.onStartRecord).toHaveBeenCalled();
+    });
+
+    it("should not start recording automatically when autoRecord is false", async () => {
+      // Connect with autoRecord set to false (default)
+      client.connect();
+
+      // Simulate successful connection
+      mockSocket.connected = true;
+      const connectCallback = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "connect"
+      )[1];
+      await connectCallback();
+
+      // Wait for any async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Verify that getUserMedia was not called
+      expect(mockGetUserMedia).not.toHaveBeenCalled();
+
+      // Verify that onStartRecord was not called
+      expect(client["config"].events.onStartRecord).not.toHaveBeenCalled();
+    });
+
     it("should call onConnect with websocket transport when using websocket", () => {
       // Mock the socket's transport name
       mockSocket.io = {
@@ -312,18 +354,66 @@ describe("AiolaStreamingClient", () => {
       client.connect();
       mockSocket.connected = true;
 
+      // Start recording and wait for it to complete
       await client.startRecording();
 
+      // Verify error handling
       expect(client["config"].events.onError).toHaveBeenCalledWith(
         expect.objectContaining({
           code: AiolaSocketErrorCode.MIC_ERROR,
           message: expect.stringContaining("Permission denied"),
         })
       );
-      expect(console.error).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining("Permission denied")
       );
-      expect(client["config"].events.onStopRecord).toHaveBeenCalled();
+      // We never started recording, so onStopRecord should not be called
+      expect(client["config"].events.onStopRecord).not.toHaveBeenCalled();
+      // onStartRecord should not be called when permissions are denied
+      expect(client["config"].events.onStartRecord).not.toHaveBeenCalled();
+    });
+
+    it("should handle permission denied case", async () => {
+      // Mock getUserMedia to simulate permission denied
+      mockGetUserMedia.mockRejectedValueOnce(new Error("Permission denied"));
+
+      // Connect socket first
+      client.connect();
+      mockSocket.connected = true;
+
+      // Start recording and wait for it to complete
+      await client.startRecording();
+
+      // Verify that getUserMedia was called with correct parameters
+      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+
+      // Verify error handling
+      expect(client["config"].events.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: AiolaSocketErrorCode.MIC_ERROR,
+          message: expect.stringContaining("Permission denied"),
+        })
+      );
+
+      // Verify that recording events are not called since we never got permission
+      expect(client["config"].events.onStartRecord).not.toHaveBeenCalled();
+      expect(client["config"].events.onStopRecord).not.toHaveBeenCalled();
+
+      // Verify that no audio context was created
+      expect(mockAudioContext.createMediaStreamSource).not.toHaveBeenCalled();
+    });
+
+    it("should only call onStartRecord after getUserMedia permissions are granted", async () => {
+      // Connect socket first
+      client.connect();
+      mockSocket.connected = true;
+
+      // Start recording and wait for it to complete
+      await client.startRecording();
+
+      // Verify onStartRecord is called after getUserMedia succeeds
+      expect(client["config"].events.onStartRecord).toHaveBeenCalled();
+      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
     });
 
     it("should handle multiple start/stop cycles", async () => {
