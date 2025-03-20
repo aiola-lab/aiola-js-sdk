@@ -11,7 +11,6 @@ export default class AiolaTTSClient {
 
   constructor(config: TTSConfig) {
     this.config = config;
-    console.log(`AiolaTTSClient SDK Version: ${SDK_VERSION}`);
   }
 
   public async synthesizeSpeech(text: string, voice?: string): Promise<Blob> {
@@ -88,7 +87,6 @@ export default class AiolaTTSClient {
 
   public getVoices(): Record<string, string> {
     return {
-      Default: "af",
       Bella: "af_bella",
       Nicole: "af_nicole",
       Sarah: "af_sarah",

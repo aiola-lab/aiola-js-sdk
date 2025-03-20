@@ -4,7 +4,9 @@ import {
   AiolaSocketError,
   AiolaSocketErrorCode,
   AiolaSocketNamespace,
+  AiolaSocketConfig,
 } from "./index";
+import { io } from "socket.io-client";
 
 // Mock socket.io-client
 jest.mock("socket.io-client", () => {
@@ -51,20 +53,35 @@ const mockMediaStream = {
   getTracks: jest.fn().mockReturnValue([{ stop: jest.fn() }]),
 } as unknown as MediaStream;
 
-// Create a properly typed mock function for getUserMedia
-const mockGetUserMedia = jest.fn() as any;
-mockGetUserMedia.mockResolvedValue(mockMediaStream);
+// Setup mock mediaDevices before any test runs
+const mockMediaDevices = {
+  getUserMedia: jest
+    .fn<() => Promise<MediaStream>>()
+    .mockResolvedValue(mockMediaStream),
+};
 
-// Mock getUserMedia using spyOn
+// Set up navigator.mediaDevices globally and only once
 if (!global.navigator) {
   (global as any).navigator = {};
 }
-if (!global.navigator.mediaDevices) {
-  (global as any).navigator.mediaDevices = {};
+
+// Check if mediaDevices property exists and is configurable
+const mediaDevicesDescriptor = Object.getOwnPropertyDescriptor(
+  global.navigator,
+  "mediaDevices"
+);
+if (!mediaDevicesDescriptor || mediaDevicesDescriptor.configurable) {
+  // Define mediaDevices property
+  Object.defineProperty(global.navigator, "mediaDevices", {
+    value: mockMediaDevices,
+    writable: true,
+    configurable: true,
+  });
+} else {
+  // If property exists and is not configurable, mock getUserMedia directly
+  (global.navigator.mediaDevices as any).getUserMedia =
+    mockMediaDevices.getUserMedia;
 }
-jest
-  .spyOn(global.navigator.mediaDevices, "getUserMedia")
-  .mockImplementation(mockGetUserMedia);
 
 // Mock TextEncoder
 global.TextEncoder = class {
@@ -72,6 +89,23 @@ global.TextEncoder = class {
     return new Uint8Array(Buffer.from(str));
   }
 } as any;
+
+const mockConfig: AiolaSocketConfig = {
+  baseUrl: "http://test.com",
+  namespace: AiolaSocketNamespace.EVENTS,
+  bearer: "test-token",
+  queryParams: {},
+  events: {
+    onTranscript: jest.fn(),
+    onEvents: jest.fn(),
+    onConnect: jest.fn(),
+    onDisconnect: jest.fn(),
+    onStartRecord: jest.fn(),
+    onStopRecord: jest.fn(),
+    onKeyWordSet: jest.fn(),
+    onError: jest.fn(),
+  },
+};
 
 describe("AiolaStreamingClient", () => {
   let client: AiolaStreamingClient;
@@ -92,12 +126,20 @@ describe("AiolaStreamingClient", () => {
       connected: false,
       disconnect: jest.fn(),
       once: jest.fn(),
+      removeAllListeners: jest.fn(),
+      io: {
+        engine: {
+          transport: {
+            name: "websocket",
+          },
+        },
+      },
     };
     (require("socket.io-client") as any).io.mockReturnValue(mockSocket);
 
-    // Reset the mock implementation
-    mockGetUserMedia.mockReset();
-    mockGetUserMedia.mockResolvedValue(mockMediaStream);
+    // Reset getUserMedia mock before each test
+    mockMediaDevices.getUserMedia.mockReset();
+    mockMediaDevices.getUserMedia.mockResolvedValue(mockMediaStream);
 
     client = new AiolaStreamingClient({
       baseUrl: "https://test.com",
@@ -113,6 +155,7 @@ describe("AiolaStreamingClient", () => {
         onTranscript: jest.fn(),
         onEvents: jest.fn(),
         onConnect: jest.fn(),
+        onDisconnect: jest.fn(),
         onError: jest.fn(),
         onStartRecord: jest.fn(),
         onStopRecord: jest.fn(),
@@ -159,7 +202,9 @@ describe("AiolaStreamingClient", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify that getUserMedia was called
-      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(mockMediaDevices.getUserMedia).toHaveBeenCalledWith({
+        audio: true,
+      });
 
       // Verify that onStartRecord was called
       expect(client["config"].events.onStartRecord).toHaveBeenCalled();
@@ -180,7 +225,7 @@ describe("AiolaStreamingClient", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify that getUserMedia was not called
-      expect(mockGetUserMedia).not.toHaveBeenCalled();
+      expect(mockMediaDevices.getUserMedia).not.toHaveBeenCalled();
 
       // Verify that onStartRecord was not called
       expect(client["config"].events.onStartRecord).not.toHaveBeenCalled();
@@ -289,6 +334,64 @@ describe("AiolaStreamingClient", () => {
         })
       );
     });
+
+    it("should call onDisconnect when socket disconnects", () => {
+      client.connect();
+
+      // Simulate disconnection
+      const disconnectHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "disconnect"
+      )[1];
+      disconnectHandler();
+
+      expect(client["config"].events.onDisconnect).toHaveBeenCalled();
+    });
+
+    it("should call onDisconnect when socket is closed", () => {
+      client.connect();
+
+      // Simulate socket close by calling disconnect handler
+      const disconnectHandler = mockSocket.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === "disconnect"
+      )[1];
+      disconnectHandler();
+
+      expect(client["config"].events.onDisconnect).toHaveBeenCalled();
+    });
+
+    it("should call onDisconnect when closeSocket is called", () => {
+      client.connect();
+      client.closeSocket();
+
+      expect(client["config"].events.onDisconnect).toHaveBeenCalled();
+    });
+
+    it("should not call onDisconnect if handler is not provided", () => {
+      // Create client without onDisconnect handler
+      const clientWithoutDisconnect = new AiolaStreamingClient({
+        baseUrl: "https://test.com",
+        namespace: AiolaSocketNamespace.EVENTS,
+        bearer: "test-token",
+        queryParams: {},
+        events: {
+          onTranscript: jest.fn(),
+          onEvents: jest.fn(),
+          onConnect: jest.fn(),
+          onError: jest.fn(),
+          onStartRecord: jest.fn(),
+          onStopRecord: jest.fn(),
+          onKeyWordSet: jest.fn(),
+        },
+      });
+
+      clientWithoutDisconnect.connect();
+      clientWithoutDisconnect.closeSocket();
+
+      // Verify no error occurred
+      expect(
+        clientWithoutDisconnect["config"].events.onError
+      ).not.toHaveBeenCalled();
+    });
   });
 
   describe("startRecording", () => {
@@ -348,7 +451,9 @@ describe("AiolaStreamingClient", () => {
 
     it("should handle getUserMedia error", async () => {
       const error = new Error("Permission denied");
-      mockGetUserMedia.mockRejectedValueOnce(error);
+      mockMediaDevices.getUserMedia.mockRejectedValueOnce(
+        error as unknown as DOMException
+      );
 
       // Connect socket first
       client.connect();
@@ -375,7 +480,9 @@ describe("AiolaStreamingClient", () => {
 
     it("should handle permission denied case", async () => {
       // Mock getUserMedia to simulate permission denied
-      mockGetUserMedia.mockRejectedValueOnce(new Error("Permission denied"));
+      mockMediaDevices.getUserMedia.mockRejectedValueOnce(
+        new Error("Permission denied") as unknown as DOMException
+      );
 
       // Connect socket first
       client.connect();
@@ -385,7 +492,9 @@ describe("AiolaStreamingClient", () => {
       await client.startRecording();
 
       // Verify that getUserMedia was called with correct parameters
-      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(mockMediaDevices.getUserMedia).toHaveBeenCalledWith({
+        audio: true,
+      });
 
       // Verify error handling
       expect(client["config"].events.onError).toHaveBeenCalledWith(
@@ -413,7 +522,9 @@ describe("AiolaStreamingClient", () => {
 
       // Verify onStartRecord is called after getUserMedia succeeds
       expect(client["config"].events.onStartRecord).toHaveBeenCalled();
-      expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(mockMediaDevices.getUserMedia).toHaveBeenCalledWith({
+        audio: true,
+      });
     });
 
     it("should handle multiple start/stop cycles", async () => {
@@ -549,6 +660,38 @@ describe("AiolaStreamingClient", () => {
           message: expect.stringContaining("Socket error"),
         })
       );
+    });
+    it("should prevent concurrent recordings", async () => {
+      const mockMicSource = {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      };
+
+      mockAudioContext.createMediaStreamSource.mockReturnValue(mockMicSource);
+
+      // Connect socket first
+      client.connect();
+      mockSocket.connected = true;
+
+      // Start first recording
+      await client.startRecording();
+      expect(client["config"].events.onStartRecord).toHaveBeenCalledTimes(1);
+      expect(client["config"].events.onError).not.toHaveBeenCalled();
+
+      // Try to start second recording while first is active
+      await client.startRecording();
+      expect(client["config"].events.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: AiolaSocketErrorCode.MIC_ALREADY_IN_USE,
+          message:
+            "Recording is already in progress. Please stop the current recording first.",
+        })
+      );
+      expect(client["config"].events.onStartRecord).toHaveBeenCalledTimes(1); // Should not have been called again
+
+      // Stop recording
+      client.stopRecording();
+      expect(client["config"].events.onStopRecord).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -763,6 +906,77 @@ describe("AiolaStreamingClient", () => {
         expect.any(Uint8Array),
         expect.any(Function)
       );
+    });
+  });
+
+  describe("recordingInProgress flag", () => {
+    let client: AiolaStreamingClient;
+    let mockSocket: any;
+
+    beforeEach(() => {
+      // Reset getUserMedia mock before each test
+      mockMediaDevices.getUserMedia.mockReset();
+      mockMediaDevices.getUserMedia.mockResolvedValue(mockMediaStream);
+
+      // Mock socket.io
+      mockSocket = {
+        connected: true,
+        on: jest.fn(),
+        emit: jest.fn(),
+        removeAllListeners: jest.fn(),
+        disconnect: jest.fn(),
+      };
+      (io as jest.Mock).mockReturnValue(mockSocket);
+
+      // Create client instance
+      client = new AiolaStreamingClient(mockConfig);
+      client.connect();
+    });
+
+    it("should be false initially", () => {
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(false);
+    });
+
+    it("should be true after successful recording start", async () => {
+      await client.startRecording();
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(true);
+    });
+
+    it("should be false after stopping recording", async () => {
+      await client.startRecording();
+      client.stopRecording();
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(false);
+    });
+
+    it("should be false if getUserMedia fails", async () => {
+      const error = new Error("Permission denied");
+      mockMediaDevices.getUserMedia.mockRejectedValueOnce(
+        error as unknown as DOMException
+      );
+      await client.startRecording();
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(false);
+    });
+
+    it("should be false if initialization fails after getUserMedia", async () => {
+      // Mock AudioContext to throw error
+      (global as any).AudioContext = jest.fn().mockImplementation(() => {
+        throw new Error("AudioContext failed");
+      });
+
+      await client.startRecording();
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(false);
+    });
+
+    it("should be false after socket disconnection", async () => {
+      await client.startRecording();
+      client.closeSocket();
+      // Accessing private property for testing
+      expect(client["recordingInProgress"]).toBe(false);
     });
   });
 });

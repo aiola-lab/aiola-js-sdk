@@ -5,10 +5,13 @@ export class AiolaStreamingClient {
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private micSource: MediaStreamAudioSourceNode | null = null;
+  private audioWorkletNode: AudioWorkletNode | null = null;
+  private recordingInProgress: boolean = false;
   private config: AiolaSocketConfig & {
     micConfig: NonNullable<AiolaSocketConfig["micConfig"]>;
   };
   private activeKeywords: string[] = [];
+  private isStoppingRecording: boolean = false;
 
   constructor(config: AiolaSocketConfig) {
     // Set default micConfig values if not provided
@@ -55,6 +58,9 @@ export class AiolaStreamingClient {
     const _bearer = `Bearer ${bearer}`;
     const _transports =
       transports === "polling" ? ["polling"] : ["polling", "websocket"];
+
+    // Clean up any existing socket connection
+    this.cleanupSocket();
 
     this.socket = io(this.buildEndpoint(), {
       withCredentials: true,
@@ -113,6 +119,7 @@ export class AiolaStreamingClient {
     this.socket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
       this.stopRecording();
+      this.closeSocket();
       this.handleError(
         `Socket connection error: ${error.message}`,
         AiolaSocketErrorCode.NETWORK_ERROR,
@@ -120,14 +127,36 @@ export class AiolaStreamingClient {
       );
     });
 
+    this.socket.on("disconnect", () => {
+      this.cleanupSocket();
+    });
+
     this.socket.on("transcript", events.onTranscript ?? (() => {}));
     this.socket.on("events", events.onEvents ?? (() => {}));
+  }
+
+  private cleanupSocket(): void {
+    if (this.socket) {
+      // Remove all event listeners
+      this.socket.removeAllListeners();
+
+      // Only stop recording if it's actually in progress
+      if (this.recordingInProgress) {
+        this.stopRecording();
+      }
+
+      // Emit disconnect event
+      this.config.events.onDisconnect?.();
+
+      // Clear the socket reference
+      this.socket = null;
+    }
   }
 
   public closeSocket(): void {
     if (this.socket) {
       this.socket.disconnect();
-      this.socket = null;
+      this.cleanupSocket();
     }
   }
 
@@ -140,8 +169,18 @@ export class AiolaStreamingClient {
       return;
     }
 
+    // Check if recording is already in progress
+    if (this.recordingInProgress) {
+      this.handleError(
+        "Recording is already in progress. Please stop the current recording first.",
+        AiolaSocketErrorCode.MIC_ALREADY_IN_USE
+      );
+      return;
+    }
+
     const { micConfig } = this.config;
     try {
+      // Get media stream first before setting recordingInProgress
       this.mediaStream = await navigator.mediaDevices
         .getUserMedia({
           audio: true,
@@ -158,6 +197,9 @@ export class AiolaStreamingClient {
       if (!this.mediaStream) {
         return;
       }
+
+      // Set recordingInProgress only after we successfully get the media stream
+      this.recordingInProgress = true;
       this.config.events.onStartRecord?.();
 
       this.audioContext = new AudioContext({
@@ -205,7 +247,7 @@ export class AiolaStreamingClient {
 
       await this.audioContext.audioWorklet.addModule(url);
 
-      const audioWorkletNode = new AudioWorkletNode(
+      this.audioWorkletNode = new AudioWorkletNode(
         this.audioContext,
         "audio-processor",
         {
@@ -213,7 +255,7 @@ export class AiolaStreamingClient {
         }
       );
 
-      audioWorkletNode.port.onmessage = async (event: MessageEvent) => {
+      this.audioWorkletNode.port.onmessage = async (event: MessageEvent) => {
         try {
           const chunk = event.data;
           const int16Array = this.float32ToInt16(chunk);
@@ -223,9 +265,11 @@ export class AiolaStreamingClient {
         }
       };
 
-      this.micSource.connect(audioWorkletNode);
+      this.micSource.connect(this.audioWorkletNode);
     } catch (error) {
-      this.config.events.onStopRecord?.();
+      // Ensure recordingInProgress is set to false before cleanup
+      this.recordingInProgress = false;
+      this.stopRecording();
       this.handleError(
         `Error starting microphone recording: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -237,18 +281,94 @@ export class AiolaStreamingClient {
   }
 
   public stopRecording(): void {
+    if (this.isStoppingRecording) {
+      return;
+    }
+
     try {
-      if (this.micSource) this.micSource.disconnect();
+      this.isStoppingRecording = true;
+      this.config.events.onStopRecord?.();
+
+      // Disconnect and cleanup micSource
+      if (this.micSource) {
+        try {
+          this.micSource.disconnect();
+        } catch (error) {
+          this.handleError(
+            `Error disconnecting micSource: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            AiolaSocketErrorCode.MIC_ERROR,
+            { originalError: error }
+          );
+        } finally {
+          this.micSource = null;
+        }
+      }
+
+      // Cleanup audioWorkletNode
+      if (this.audioWorkletNode) {
+        try {
+          this.audioWorkletNode.disconnect();
+        } catch (error) {
+          this.handleError(
+            `Error disconnecting audioWorkletNode: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            AiolaSocketErrorCode.MIC_ERROR,
+            { originalError: error }
+          );
+        } finally {
+          this.audioWorkletNode = null;
+        }
+      }
+
+      // Stop and cleanup mediaStream
       if (this.mediaStream) {
-        const tracks = this.mediaStream.getTracks();
-        tracks.forEach((track) => track.stop());
+        try {
+          const tracks = this.mediaStream.getTracks();
+          tracks.forEach((track) => {
+            try {
+              track.stop();
+            } catch (error) {
+              this.handleError(
+                `Error stopping track: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`,
+                AiolaSocketErrorCode.MIC_ERROR,
+                { originalError: error }
+              );
+            }
+          });
+        } catch (error) {
+          this.handleError(
+            `Error stopping mediaStream: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            AiolaSocketErrorCode.MIC_ERROR,
+            { originalError: error }
+          );
+        } finally {
+          this.mediaStream = null;
+        }
       }
+
+      // Close and cleanup audioContext
       if (this.audioContext) {
-        this.audioContext.close();
+        try {
+          this.audioContext.close();
+        } catch (error) {
+          this.handleError(
+            `Error closing audioContext: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            AiolaSocketErrorCode.MIC_ERROR,
+            { originalError: error }
+          );
+        } finally {
+          this.audioContext = null;
+        }
       }
-      this.micSource = null;
-      this.mediaStream = null;
-      this.audioContext = null;
     } catch (error) {
       this.handleError(
         `Error stopping microphone recording: ${
@@ -258,7 +378,13 @@ export class AiolaStreamingClient {
         { originalError: error }
       );
     } finally {
-      this.config.events.onStopRecord?.();
+      // Ensure all resources are nullified even if there was an error
+      this.micSource = null;
+      this.mediaStream = null;
+      this.audioContext = null;
+      this.audioWorkletNode = null;
+      this.recordingInProgress = false;
+      this.isStoppingRecording = false;
     }
   }
 
@@ -397,6 +523,7 @@ export interface AiolaSocketConfig {
     onTranscript?: (data: any) => void;
     onEvents?: (data: any) => void;
     onConnect?: (transportProtocolName: "polling" | "websocket") => void;
+    onDisconnect?: () => void;
     onStartRecord?: () => void;
     onStopRecord?: () => void;
     onKeyWordSet?: (keywords: string[]) => void;
@@ -418,6 +545,7 @@ export enum AiolaSocketErrorCode {
   AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
   KEYWORDS_ERROR = "KEYWORDS_ERROR",
   MIC_ERROR = "MIC_ERROR",
+  MIC_ALREADY_IN_USE = "MIC_ALREADY_IN_USE",
   STREAMING_ERROR = "STREAMING_ERROR",
   GENERAL_ERROR = "GENERAL_ERROR",
 }
