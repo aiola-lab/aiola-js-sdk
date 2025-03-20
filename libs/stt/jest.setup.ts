@@ -1,96 +1,41 @@
 import "whatwg-fetch";
 import { io } from "socket.io-client";
+import { setupTestEnv } from "./tests/utils";
 
-// Mock AudioContext and AudioWorkletNode
-class MockAudioContext implements Partial<AudioContext> {
-  createMediaStreamSource = jest.fn().mockImplementation(() => ({
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    context: this,
-    numberOfInputs: 1,
-    numberOfOutputs: 1,
-    channelCount: 2,
-    channelCountMode: "explicit" as ChannelCountMode,
-    channelInterpretation: "speakers" as ChannelInterpretation,
-  }));
-  audioWorklet = {
-    addModule: jest.fn().mockReturnValue(Promise.resolve()),
-  };
-  destination = {} as AudioDestinationNode;
-  currentTime = 0;
-  sampleRate = 44100;
-  state = "running" as AudioContextState;
-  addEventListener = jest.fn();
-  removeEventListener = jest.fn();
-  dispatchEvent = jest.fn();
-}
+// Setup all global mocks needed for tests
+setupTestEnv();
 
-// Mock AudioWorkletNode
-class MockAudioWorkletNode implements Partial<AudioWorkletNode> {
-  context: AudioContext;
-  port: MessagePort;
-  connect: jest.Mock;
-  disconnect: jest.Mock;
-  numberOfInputs: number;
-  numberOfOutputs: number;
-  channelCount: number;
-  channelCountMode: ChannelCountMode;
-  channelInterpretation: ChannelInterpretation;
+// Additional mocks that aren't in utils.ts
 
-  constructor(context: AudioContext) {
-    this.context = context;
-    this.port = {
-      onmessage: jest.fn(),
-      onmessageerror: jest.fn(),
-      close: jest.fn(),
-      postMessage: jest.fn(),
-      start: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    } as unknown as MessagePort;
-    this.connect = jest.fn();
-    this.disconnect = jest.fn();
-    this.numberOfInputs = 1;
-    this.numberOfOutputs = 1;
-    this.channelCount = 2;
-    this.channelCountMode = "explicit";
-    this.channelInterpretation = "speakers";
-  }
-}
+// Mock Blob (not in utils.ts)
+global.Blob = jest.fn().mockImplementation(() => ({})) as any;
 
-// Setup global mocks
-(global as any).AudioContext = MockAudioContext;
-(global as any).AudioWorkletNode = MockAudioWorkletNode;
-
-// Mock navigator.mediaDevices
-if (!global.navigator) {
-  (global as any).navigator = {
-    mediaDevices: {
-      getUserMedia: jest
-        .fn()
-        .mockReturnValue(Promise.resolve({} as MediaStream)),
-    },
-  };
-}
-
-// Mock URL
-global.URL = {
-  createObjectURL: jest.fn().mockReturnValue("mock-url"),
-  revokeObjectURL: jest.fn(),
-} as any;
-
-// Mock Blob
-global.Blob = jest.fn().mockImplementation(() => ({}));
-
-// Mock document.cookie
+// Mock document.cookie (not in utils.ts)
 Object.defineProperty(document, "cookie", {
   writable: true,
   value: "",
 });
 
-// Mock window.io
+// Mock window.io (not in utils.ts)
 (global as any).window = {
   ...global.window,
   io,
 };
+
+// Socket.io-client mock
+jest.mock("socket.io-client", () => {
+  return {
+    io: jest.fn().mockReturnValue({
+      on: jest.fn(),
+      emit: jest.fn(),
+      connected: false,
+      disconnect: jest.fn(),
+    }),
+  };
+});
+
+// Note: The setupTestEnv function from utils.ts includes all the necessary mocks:
+// - AudioContext and AudioWorkletNode
+// - URL object
+// - navigator.mediaDevices
+// - TextEncoder

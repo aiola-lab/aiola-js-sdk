@@ -10,6 +10,8 @@ export default {
       "ts-jest",
       {
         useESM: true,
+        isolatedModules: true,
+        diagnostics: false,
       },
     ],
     "^.+\\.jsx?$": [
@@ -20,7 +22,7 @@ export default {
     ],
   },
   extensionsToTreatAsEsm: [".ts"],
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["**/*.test.ts", "tests/**/*.test.ts"],
   setupFiles: ["./jest.setup.ts"],
   transformIgnorePatterns: ["node_modules/(?!whatwg-fetch|socket.io-client)/"],
 };
