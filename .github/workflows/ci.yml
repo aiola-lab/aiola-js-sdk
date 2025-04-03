@@ -30,7 +30,7 @@ env:
   node-version: "21.x"
   NODE_AUTH_TOKEN: "${{ secrets.NPM_REGISTRY_ACCESS_TOKEN}}"
   registry_url: "${{ vars.REGISTRY_BASE_URL }}"
-  github-token: "${{ secrets.GH_ACTIONS_PAT }}"
+  github-token: "${{ secrets.PTA }}"
 
 jobs:
   detect-changes:
