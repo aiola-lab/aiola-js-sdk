@@ -67,6 +67,7 @@ export class AiolaStreamingClient {
       path: this.buildPath(),
       query: {
         ...this.config.queryParams,
+        'x-aiola-api-key': bearer,
       },
       transports: _transports,
       transportOptions: {

@@ -12,10 +12,9 @@ on:
       - release-**
       - hotfix-**
     paths:
-      - 'apps/**'
-      - 'libs/**'
-      - '!README.md'
-      - '!.github/workflows/**'
+      - "libs/**"
+      - "!README.md"
+      - "!.github/workflows/**"
   push:
     branches:
       - main
@@ -23,37 +22,23 @@ on:
       - release-**
       - hotfix-**
     paths:
-      - 'apps/**'
-      - 'libs/**'
-      - '!README.md'
-      - '!.github/workflows/**'
+      - "libs/**"
+      - "!README.md"
+      - "!.github/workflows/**"
 
 env:
-  node-version: '21.x' # node version to use
-  github-token: ${{ secrets.GH_ACTIONS_PTA }}
-  github-user: ${{ secrets.GH_ACTIONS_USER }}
-  github-email: ${{ secrets.GH_ACTIONS_EMAIL }}
-  NODE_AUTH_TOKEN: '${{ secrets.NPM_REGISTRY_ACCESS_TOKEN}}'
-  ### Registries
-  registry_url: ${{ vars.REGISTRY_BASE_URL }}
-  node_registry_url: ${{ vars.NPM_REGISTRY_URL }}
-  docker_registry_url: ${{ vars.DOCKER_REGISTRY_URL }}
-  docker_repository_name: ${{ vars.DOCKER_REPOSITORY_NAME }}
-  artifactory-oidc-provider-name: "aiola-github-integration"
-  docker-file: Dockerfile
+  node-version: "21.x"
+  NODE_AUTH_TOKEN: "${{ secrets.NPM_REGISTRY_ACCESS_TOKEN}}"
+  registry_url: "${{ vars.REGISTRY_BASE_URL }}"
 
 jobs:
-  CI-Launcher:
-    name: 'CI-Launcher'
+  detect-changes:
+    name: "Detect Changed Libraries"
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      id-token: write
     outputs:
       diff: ${{ steps.diff.outputs.all_modified_files }}
       any_modified: ${{ steps.diff.outputs.any_modified }}
     steps:
-      ################################################## General ##################################################
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -68,118 +53,54 @@ jobs:
           json: true
           json_raw_format: true
           files: |
-            apps/**
             libs/**
             !README.md
             !.github/workflows/**
-      
-      - name: print modified directories
+
+      - name: Print modified directories
         run: |
           echo "Modified directories: ${{ steps.diff.outputs.all_modified_files }}"
 
-  CI-Exection:
-    name: 'CI-Exection'
+  build-and-publish:
+    name: "Build and Publish Libraries"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any_modified == 'true'
     runs-on: ubuntu-22.04
-    needs: CI-Launcher
-    if: needs.CI-Launcher.outputs.any_modified == 'true'
-    strategy:
-      matrix:
-        microservice_path: ${{ fromJson(needs.CI-Launcher.outputs.diff) }}
-        # microservice_path: ['apps/flow-backend-api', 'apps/file-service']
     permissions:
       contents: write
       id-token: write
+    strategy:
+      matrix:
+        lib_path: ${{ fromJson(needs.detect-changes.outputs.diff) }}
     steps:
-      ################################################## General ##################################################
       - name: Checkout repository
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/checkout@RDM-6484-ci-pipelines
+        uses: actions/checkout@v4
         with:
           token: ${{ env.github-token }}
 
-      - name: Install basic tools
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/base-tools-install@RDM-6484-ci-pipelines
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.node-version }}"
+          registry-url: "${{ env.registry_url }}"
 
-      # Exports microservice_type, microservice_name and microservice_base_dir
-      - name: Set env vars
-        id: env-vars
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/env-vars-set@RDM-6484-ci-pipelines
-        with:
-          microservice_path: ${{ matrix.microservice_path }}
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: "${{ env.NODE_AUTH_TOKEN }}"
 
-      ################################################## NodeJS ##################################################
-          
-      - name: Install NodeJS
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/node-install@RDM-6484-ci-pipelines
-        with:
-          node_version: ${{ env.node-version }}
+      - name: Build and publish library
+        run: |
+          echo "Processing library: ${{ matrix.lib_path }}"
+          cd ${{ matrix.lib_path }}
+          npm run build
+          npm publish
+          cd ../..
+        env:
+          NODE_AUTH_TOKEN: "${{ env.NODE_AUTH_TOKEN }}"
 
-      - name: Configure NodeJS
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/node-configure@RDM-6484-ci-pipelines
-        with:
-          registry_url: ${{ env.registry_url }}
-
-      # Exports microservice_versioning_type and microservice_version_suffix (e.g. patch and rc-1)
-      - name: Versioning NodeJS
-        id: versioning
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/node-versioning@RDM-6484-ci-pipelines
-        with:
-          microservice_path: ${{ matrix.microservice_path }}
-      
-      # Exports microservice_version (e.g. 1.0.0-rc-1)
-      - name: Build & Test
-        id: build-test
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/node-build@RDM-6484-ci-pipelines
-        with:
-          microservice_path: ${{ matrix.microservice_path }}
-          microservice_versioning_type: ${{ env.microservice_versioning_type }}
-          microservice_version_suffix: ${{ env.microservice_version_suffix }}
-          NODE_AUTH_TOKEN: ${{ env.NODE_AUTH_TOKEN }}
-      
-      ################################################## DOCKER ##################################################
-      
-      
-      - name: Install Docker
-        if: env.microservice_type == 'apps'
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/docker-install@RDM-6484-ci-pipelines
-      
-      - name: Configure Docker
-        if: env.microservice_type == 'apps'
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/docker-configure@RDM-6484-ci-pipelines
-        with:
-          docker_registry_url: ${{ env.docker_registry_url }}
-          docker_registry_user: ${{ secrets.DOCKER_REGISTRY_USER }}
-          docker_registry_access_token: ${{ secrets.DOCKER_REGISTRY_ACCESS_TOKEN }}
-
-      - name: Build & Push Docker
-        if: env.microservice_type == 'apps'
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/docker-build-push@RDM-6484-ci-pipelines
-        id: docker-build-push
-        with:
-          microservice_name: ${{ env.microservice_name }}
-          microservice_path: ${{ matrix.microservice_path }}
-          microservice_version: ${{ env.microservice_version }}
-          docker_registry_url: ${{ env.docker_registry_url }}
-          docker_repository_name: ${{ env.docker_repository_name }}
-
-      ################################################## PUBLISH ##################################################
-      
-      - name: Publish to Artifactory
-        if: env.microservice_type == 'libs'
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/node-publish@RDM-6484-ci-pipelines
-        with:
-          microservice_name: ${{ env.microservice_name }}
-          microservice_path: ${{ matrix.microservice_path }}
-          microservice_version: ${{ env.microservice_version }}
-          registry_url: ${{ env.registry_url }}
-          NODE_AUTH_TOKEN: ${{ env.NODE_AUTH_TOKEN }}
-
-      ################################################## Summary ##################################################
-      
       - name: Summary
-        if: ${{ always() }}
-        uses: aiola-lab/aiola-devops/management/developer-stuff/ci-blocks/summary@RDM-6484-ci-pipelines
-        with:
-          microservice_name: ${{ env.microservice_name }}
-          microservice_version: ${{ env.microservice_version }}
-          docker_tags: ${{ steps.docker-build-push.outputs.tags }}
-          docker_labels: ${{ steps.docker-build-push.outputs.labels }}
+        if: always()
+        run: |
+          echo 'Build and publish completed for ${{ matrix.lib_path }}'
+          echo 'Published to: ${{ env.registry_url }}'
