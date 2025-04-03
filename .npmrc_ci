@@ -1,0 +1,7 @@
+//aiola.jfrog.io/artifactory/api/npm/npm/:_authToken=${NODE_AUTH_TOKEN}
+@aiola:registry=https://aiola.jfrog.io/artifactory/api/npm/npm/
+@flow:registry=https://aiola.jfrog.io/artifactory/api/npm/npm/
+@jargonic:registry=https://aiola.jfrog.io/artifactory/api/npm/npm/
+@shared:registry=https://aiola.jfrog.io/artifactory/api/npm/npm/
+@ai-platform:registry=https://aiola.jfrog.io/artifactory/api/npm/npm/
+registry=https://registry.npmjs.org/
