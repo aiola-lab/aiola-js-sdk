@@ -1,5 +1,5 @@
 {
-  "name": "aiola-js-sdk",
+  "name": "@aiola/js-sdk",
   "private": true,
   "workspaces": [
     "libs/*"

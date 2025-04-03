@@ -1,5 +1,5 @@
 {
-  "name": "@aiola-js-sdk/tts",
+  "name": "@aiola/js-sdk/tts",
   "version": "0.1.0",
   "description": "Aiola Text-to-Speech JavaScript SDK",
   "main": "dist/cjs/index.js",
