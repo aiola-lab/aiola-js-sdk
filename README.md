@@ -1,3 +1,6 @@
+# 🚧 Deprecation Notice!! 🚧
+## 👷 No longer supported. Use the following repo instead: [aiola-ts-client-sdk](https://github.com/aiola-lab/aiola-ts-client-sdk) 👷
+
 # aiOla JavaScript SDKs
 
 Welcome to the **aiOla JavaScript SDKs** repository. This repository contains examples and documentation for various SDKs that integrate with aiOla's Text-to-Speech (TTS) and streaming services.
