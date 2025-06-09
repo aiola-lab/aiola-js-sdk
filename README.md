@@ -1,5 +1,5 @@
 # 🚧 Deprecation Notice!! 🚧
-## 👷 No longer supported. Use the following repo instead: [aiola-ts-client-sdk](https://github.com/aiola-lab/aiola-ts-client-sdk) 👷
+## 👷 No longer supported. Use the following repo instead: [aiola-ts-client-sdk](https://github.com/aiola-lab/aiola-ts-client-sdk)
 
 # aiOla JavaScript SDKs
 
