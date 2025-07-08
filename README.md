@@ -136,7 +136,7 @@ async function streamTts() {
 streamTts();
 ```
 
-## Browser example – microphone streaming in the browser
+## Browser example  
 
 a ready-made web app that demonstrates how to use the SDK directly in a browser to stream microphone audio to aiOla Speech-to-Text and receive live transcripts.
 
