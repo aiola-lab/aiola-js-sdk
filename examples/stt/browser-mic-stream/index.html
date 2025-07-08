@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aiola Speech-To-Text Demo</title>
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+    <!-- Demo Styles -->
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+    <h1>Aiola Speech-To-Text Demo</h1>
+
+    <!-- Toggles & status messages -->
+    <div class="toggle-container">
+        <div class="toggle-group">
+            <div id="socketToggle" class="toggle-button" title="Connect / Disconnect">
+                <i class="ti ti-plug-connected-x"></i>
+            </div>
+        </div>
+        <div class="toggle-group">
+            <div id="recordingToggle" class="toggle-button" title="Start / Stop Recording">
+                <i class="ti ti-microphone-off"></i>
+            </div>
+        </div>
+        <span class="separator">|</span>
+        <div id="messageContainer" class="message-container">Ready to connect</div>
+    </div>
+
+    <!-- Transcription output -->
+    <div id="transcript" class="transcript"></div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html> 

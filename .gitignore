@@ -1,3 +1,15 @@
-**/ssl.*
-aiola_streaming_sdk/examples/.DS_Store
-aiola_tts_sdk/examples/.DS_Store
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+/build
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+.env 
