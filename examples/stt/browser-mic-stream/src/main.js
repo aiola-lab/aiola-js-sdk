@@ -1,4 +1,4 @@
-import { AiolaClient } from "@aiola/aiola-js";
+import { AiolaClient } from "@aiola/sdk";
 
 // DOM Elements
 const connectToggle = document.getElementById("connectToggle");

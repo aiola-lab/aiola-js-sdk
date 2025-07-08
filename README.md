@@ -5,9 +5,9 @@ The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, d
 ## Installation
 
 ```bash
-npm install @aiola/js-sdk
+npm install @aiola/sdk
 # or
-yarn add @aiola/js-sdk
+yarn add @aiola/sdk
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ yarn add @aiola/js-sdk
 ### Instantiate the client
 
 ```ts
-import { AiolaClient } from '@aiola/js-sdk';
+import { AiolaClient } from '@aiola/sdk';
 
 const client = new AiolaClient({
   apiKey: AIOLA_API_KEY,
@@ -24,7 +24,7 @@ const client = new AiolaClient({
 
 #### Using Access Token
 
-You can also create a client using an access token directly:
+Create a client using an access token directly:
 
 ```ts
 const client = new AiolaClient({
@@ -34,7 +34,7 @@ const client = new AiolaClient({
 
 #### Create Access Token
 
-You can create a temporary access token from an API key:
+Create a temporary access token from an API key:
 
 ```ts
 const accessToken = await AiolaClient.grantToken(AIOLA_API_KEY);
@@ -49,7 +49,7 @@ This is useful for:
 
 #### Custom base URL (enterprises)
 
-You can direct the SDK to use your own endpoint by providing the `baseUrl` option:
+Direct the SDK to use your own endpoint by providing the `baseUrl` option:
 
 ```ts
 const client = new AiolaClient({
