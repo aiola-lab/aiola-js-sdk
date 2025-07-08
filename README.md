@@ -4,6 +4,7 @@ The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, d
 
 ## Installation
 
+<!--snippet;stt;installation-->
 ```bash
 npm install @aiola/sdk
 # or
@@ -14,7 +15,7 @@ yarn add @aiola/sdk
 
 ### Instantiate the client
 
-<!--snippet;create-client-->
+<!--snippet;stt;create-client-->
 ```ts
 import { AiolaClient } from '@aiola/sdk';
 
@@ -60,7 +61,7 @@ const client = new AiolaClient({
 ```
 
 ### Speech-to-Text – transcribe file
-<!--snippet;transcribe-file-->
+<!--snippet;stt;transcribe-file-->
 ```ts
 import fs from 'node:fs';
 import path from "path";
@@ -81,7 +82,7 @@ transcribeFile();
 ```
 
 ### Speech-to-Text – live streaming
-<!--snippet;live-streaming-->
+<!--snippet;stt;live-streaming-->
 ```ts
 import { AiolaClient } from '@aiola/sdk';
 import fs from 'node:fs';
@@ -105,7 +106,7 @@ connection.connect();
 ```
 
 ### Text-to-Speech
-<!--snippet;text-to-speech-->
+<!--snippet;tts;create-file-->
 ```ts
 import fs from 'node:fs';
 
@@ -122,7 +123,7 @@ async function createFile() {
 
 createFile();
 ```
-<!--snippet;text-to-speech-streaming-->
+<!--snippet;tts;streaming-->
 ### Text-to-Speech – streaming
 
 ```ts
