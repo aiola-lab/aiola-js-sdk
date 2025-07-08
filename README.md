@@ -14,6 +14,7 @@ yarn add @aiola/sdk
 
 ### Instantiate the client
 
+<!--snippet;create-client-->
 ```ts
 import { AiolaClient } from '@aiola/sdk';
 
@@ -59,7 +60,7 @@ const client = new AiolaClient({
 ```
 
 ### Speech-to-Text – transcribe file
-
+<!--snippet;transcribe-file-->
 ```ts
 import fs from 'node:fs';
 import path from "path";
@@ -80,11 +81,16 @@ transcribeFile();
 ```
 
 ### Speech-to-Text – live streaming
-
+<!--snippet;live-streaming-->
 ```ts
+import { AiolaClient } from '@aiola/sdk';
 import fs from 'node:fs';
 
-const connection = client.stt.stream({
+const client = new AiolaClient({
+  apiKey: AIOLA_API_KEY,
+});
+
+const connection = await client.stt.stream({
   lang_code: 'en',
 });
 
@@ -99,7 +105,7 @@ connection.connect();
 ```
 
 ### Text-to-Speech
-
+<!--snippet;text-to-speech-->
 ```ts
 import fs from 'node:fs';
 
@@ -116,7 +122,7 @@ async function createFile() {
 
 createFile();
 ```
-
+<!--snippet;text-to-speech-streaming-->
 ### Text-to-Speech – streaming
 
 ```ts
