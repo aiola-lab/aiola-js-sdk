@@ -88,16 +88,13 @@ const connection = client.stt.stream({
   lang_code: 'en',
 });
 
-// Listen to streaming events with full type safety
 connection.on('transcript', ({ transcript }) => {
   console.log('Transcript:', transcript);
 });
 
-// Send audio data using the simplified API
 const audio = fs.createReadStream('./audio.wav');
 audio.on('data', (chunk) => connection.send(chunk));
 
-// Connect to start streaming
 connection.connect();
 ```
 
