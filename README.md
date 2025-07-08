@@ -1,69 +1,152 @@
-# 🚧 Deprecation Notice!! 🚧
-## 👷 No longer supported. Use the following repo instead: [aiola-ts-client-sdk](https://github.com/aiola-lab/aiola-ts-client-sdk)
+# aiOla JavaScript SDK
 
-# aiOla JavaScript SDKs
+The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, designed to work seamlessly in both Node.js and browser environments.
 
-Welcome to the **aiOla JavaScript SDKs** repository. This repository contains examples and documentation for various SDKs that integrate with aiOla's Text-to-Speech (TTS) and streaming services.
+## Installation
 
----
+```bash
+npm install @aiola/js-sdk
+# or
+yarn add @aiola/js-sdk
+```
 
-### aiOla Streaming SDK
+## Usage
 
-### Features
+### Instantiate the client
 
-- **Microphone Streaming**: Stream audio data from the browser's microphone.
-- **Live Transcription**: Receive real-time transcription of the streamed audio.
-- **Event Handling**: Process custom events received from the Aiola backend.
-- **Customizable Configuration**: Easily configure microphone and server connection settings.
-- **Keywords Spotting**: Set up keyword spotting for real-time detection of specific keywords.
-- **Supported Languages: en-EN, de-DE, fr-FR, zh-ZH, es-ES, pt-PT**
+```ts
+import { AiolaClient } from '@aiola/js-sdk';
 
-- [read more](./aiola_streaming_sdk/README.md)
+const client = new AiolaClient({
+  apiKey: AIOLA_API_KEY,
+});
+```
 
+#### Using Access Token
 
-#### 1. Transcript and Events Example
-- This example demonstrates how to use the aiOla Streaming SDK to capture live transcripts and handle backend-triggered events.
-- **Key Features**:
-  - Real-time transcription.
-  - Event-driven callbacks.
-  - [read more](./aiola_streaming_sdk/examples/1_transcript_events_example/README.md)
+You can also create a client using an access token directly:
 
-#### 2. Keyword Spotting Example
-- This example shows how to set up keyword spotting using the aiOla Streaming SDK.
-- **Key Features**:
-  - Spot predefined keywords in live streams.
-  - Event-driven keyword matching.
-  - [read more](./aiola_streaming_sdk/examples/2_keywords_spotting_example/README.md)
----
+```ts
+const client = new AiolaClient({
+  accessToken: YOUR_ACCESS_TOKEN,
+});
+```
 
-### aiOla TTS SDK
+#### Create Access Token
 
-### Features
-- Real-time text-to-speech streaming.
-- Convert text to speech and download the audio file as a `.wav`.
-- Select from a variety of predefined voices.
-- [read more](./aiola_tts_sdk/README.md)
+You can create a temporary access token from an API key:
 
-#### 1. Synthesize Speech
-- This example demonstrates how to convert text into speech and download the resulting audio file using the aiOla TTS SDK.
-- **Key Features**:
-  - Converts text into `.wav` audio files.
-  - Supports voice selection.
-  - [read more](./aiola_tts_sdk/examples/1_synthesizeSpeech/README.md)
+```ts
+const accessToken = await AiolaClient.grantToken(AIOLA_API_KEY);
 
-#### 2. Stream Speech
-- This example shows how to stream text-to-speech in real-time, enabling audio playback before the entire text is processed.
-- **Key Features**:
-  - Real-time TTS streaming.
-  - Immediate audio playback.
-  - [read more](./aiola_tts_sdk/examples/2_streamSpeech/README.md)
----
+const client = new AiolaClient({ accessToken });
+```
 
-## Get Started
+This is useful for:
+- **Backend-Frontend separation**: Generate temporary tokens in backend, use in frontend
+- **Security**: Share access tokens instead of API keys
+- **Token management**: Implement custom authentication flows
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/aiola-lab/aiola-js-sdk.git
-   cd aiola-js-sdk
-   ```
-2.	Follow the instructions in the individual example directories for specific use cases.
+#### Custom base URL (enterprises)
+
+You can direct the SDK to use your own endpoint by providing the `baseUrl` option:
+
+```ts
+const client = new AiolaClient({
+  apiKey: AIOLA_API_KEY,
+  baseUrl: 'https://api.mycompany.aiola.ai',
+});
+```
+
+### Speech-to-Text – transcribe file
+
+```ts
+import fs from 'node:fs';
+import path from "path";
+
+async function transcribeFile() {
+  const filePath = path.resolve(__dirname, "./audio.wav");
+  const file = fs.createReadStream(filePath);
+  
+  const transcript = await client.stt.transcribeFile({ 
+    file: file,
+    language: "en"
+  });
+
+  console.log(transcript);
+}
+
+transcribeFile();
+```
+
+### Speech-to-Text – live streaming
+
+```ts
+import fs from 'node:fs';
+
+const connection = client.stt.stream({
+  lang_code: 'en',
+});
+
+// Listen to streaming events with full type safety
+connection.on('transcript', ({ transcript }) => {
+  console.log('Transcript:', transcript);
+});
+
+// Send audio data using the simplified API
+const audio = fs.createReadStream('./audio.wav');
+audio.on('data', (chunk) => connection.send(chunk));
+
+// Connect to start streaming
+connection.connect();
+```
+
+### Text-to-Speech
+
+```ts
+import fs from 'node:fs';
+
+async function createFile() {
+  const audio = await client.tts.synthesize({
+    text: 'Hello, how can I help you today?',
+    voice: 'jess',
+    language: 'en',
+  });
+
+  const fileStream = fs.createWriteStream('./audio.wav');
+  audio.pipe(fileStream);
+}
+
+createFile();
+```
+
+### Text-to-Speech – streaming
+
+```ts
+async function streamTts() {
+  const stream = await client.tts.stream({
+    text: 'Hello, how can I help you today?',
+    voice: 'jess',
+    language: 'en',
+  });
+
+  const audioChunks = [];
+  for await (const chunk of stream) {
+    audioChunks.push(chunk);
+  }
+}
+
+streamTts();
+```
+
+## Browser example – microphone streaming in the browser
+
+a ready-made web app that demonstrates how to use the SDK directly in a browser to stream microphone audio to aiOla Speech-to-Text and receive live transcripts.
+
+```bash
+cd examples/stt/browser-mic-stream
+npm install
+npm run dev
+```
+
+- Uses the [`AudioWorklet`](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) API to capture microphone audio, convert it to 16-bit PCM (16 kHz, mono), and send it through the WebSocket returned.

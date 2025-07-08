@@ -1,0 +1,121 @@
+/* Basic styles for Aiola STT Demo */
+:root {
+  --primary-color: #007bff;
+  --danger-color: #dc3545;
+  --background: #f7f8fa;
+  --text-color: #222;
+  --border-radius: 6px;
+  --transition: all 0.2s ease-in-out;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  background: var(--background);
+  color: var(--text-color);
+  height: 100%;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 24px;
+  margin-bottom: 32px;
+  font-size: 1.8rem;
+}
+
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.toggle-group {
+  display: flex;
+}
+
+.toggle-button {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  background: #fff;
+  transition: var(--transition);
+}
+
+.toggle-button i {
+  font-size: 24px;
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.toggle-button.active {
+  background: var(--primary-color);
+}
+
+.toggle-button.active i {
+  color: #fff;
+}
+
+.separator {
+  color: #888;
+  font-weight: bold;
+}
+
+.message-container {
+  min-width: 200px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.message-container .error {
+  color: var(--danger-color);
+}
+
+.keywords-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.keywords-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  width: 220px;
+}
+
+.keywords-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--primary-color);
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.keywords-button:hover {
+  background: #0056b3;
+}
+
+.transcript {
+  max-width: 800px;
+  margin: 0 auto 40px auto;
+  padding: 16px;
+  border: 1px solid #e1e1e1;
+  background: #fff;
+  border-radius: var(--border-radius);
+  min-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+} 
