@@ -4,6 +4,7 @@ import { AbstractClient } from "../AbstractClient";
 import { AiolaError } from "../../lib/errors";
 import { StreamingClient } from "./streaming";
 import FormData from 'form-data'
+import { DEFAULT_WORKFLOW_ID } from "../../lib/constants";
 
 export class Stt extends AbstractClient {
   public path: string = "/api/voice-streaming/socket.io";
@@ -49,7 +50,7 @@ export class Stt extends AbstractClient {
 
   private buildQuery(requestOptions: SttStreamRequest, accessToken: string): Record<string, unknown> {
     const query: Record<string, unknown> = {
-      flow_id: requestOptions.workflowId || "",
+      flow_id: requestOptions.workflowId || DEFAULT_WORKFLOW_ID,
       execution_id: requestOptions.executionId || nanoid(),
       lang_code: requestOptions.langCode || "en",
       time_zone: requestOptions.timeZone || "UTC",
