@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.0...v1.0.1) (2025-07-09)
+
+
+### Bug Fixes
+
+* base urls ([580f09c](https://github.com/aiola-lab/aiola-js-sdk/commit/580f09c6d2466dd1a80938b1b444338e6c66db2e))
+
 # 1.0.0 (2025-07-09)
 
 
