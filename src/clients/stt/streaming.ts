@@ -4,16 +4,16 @@ import { ServerToClientEvents, ClientToServerEvents, StreamingEventName, Streami
 export interface StreamingClientOptions {
   url: string;
   path: string;
-  query: Record<string, unknown>;
+  query: Record<string, string>;
   headers: Record<string, string>;
-  accessToken: string;
 }
 
 export class StreamingClient {
     private socket: Socket<ServerToClientEvents, ClientToServerEvents>;
   
     constructor(options: StreamingClientOptions) {
-      const { url, path, query, headers, accessToken } = options;
+      const { url, path, query, headers } = options;
+
       this.socket = io(url, {
         path,
         query,
@@ -24,10 +24,16 @@ export class StreamingClient {
         reconnectionDelay: 1000,
         timeout: 10000,
         forceNew: true,
-        extraHeaders: {
-          ...headers,
-          "Authorization": `Bearer ${accessToken}`,
-        }
+        withCredentials: true,
+        extraHeaders: headers,
+        transportOptions: {
+          polling: {
+            extraHeaders: headers,
+          },
+          websocket: {
+            extraHeaders: headers,
+          },
+        },
       });
     }
   

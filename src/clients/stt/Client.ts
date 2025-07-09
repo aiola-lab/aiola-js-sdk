@@ -7,14 +7,15 @@ import FormData from 'form-data'
 import { DEFAULT_WORKFLOW_ID } from "../../lib/constants";
 
 export class Stt extends AbstractClient {
-  public path: string = "/api/voice-streaming/socket.io";
-  public namespace: string = "/events";
+  private readonly path = "/api/voice-streaming/socket.io";
+  private readonly namespace = "/events";
 
   public async stream(requestOptions: SttStreamRequest): Promise<StreamingClient> {
     const url: string = this.getWebSocketUrl();
     const accessToken = await this.auth.getAccessToken(this.options);
-    const query: Record<string, unknown> = this.buildQuery(requestOptions, accessToken);
-    const socket: StreamingClient = new StreamingClient({ url, path: this.path, query, headers: {}, accessToken });
+    const { query, headers } = this.buildQueryAndHeaders(requestOptions, accessToken);
+    
+    const socket: StreamingClient = new StreamingClient({ url, path: this.path, query, headers });
 
     if (!socket) {
       throw new AiolaError({ message: "Failed to connect to Streaming service" });
@@ -48,19 +49,24 @@ export class Stt extends AbstractClient {
     return `${this.baseUrl}${this.namespace}`;
   }
 
-  private buildQuery(requestOptions: SttStreamRequest, accessToken: string): Record<string, unknown> {
-    const query: Record<string, unknown> = {
-      flow_id: requestOptions.workflowId || DEFAULT_WORKFLOW_ID,
-      execution_id: requestOptions.executionId || nanoid(),
-      lang_code: requestOptions.langCode || "en",
-      time_zone: requestOptions.timeZone || "UTC",
-      keywords: JSON.stringify(requestOptions.keywords || {}),
-      ...(requestOptions.tasksConfig
-        ? { tasks_config: JSON.stringify(requestOptions.tasksConfig) }
-        : {}),
-      "x-aiola-api-token": accessToken,
-    };
+  private buildQueryAndHeaders(requestOptions: SttStreamRequest, accessToken: string): { query: Record<string, string>, headers: Record<string, string> } {
+    const executionId = requestOptions.executionId || nanoid();
 
-    return query;
+    const query = {
+      execution_id: executionId,
+      "x-aiola-api-token": accessToken,
+    }
+
+    const headers = {
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "X-Execution-Id": executionId,
+      "X-Workflow-Id": requestOptions.workflowId || DEFAULT_WORKFLOW_ID,
+      "x-lang-code": requestOptions.langCode || "en",
+      "x-time-zone": requestOptions.timeZone || "UTC",
+      "Authorization": `Bearer ${accessToken}`
+    }
+
+    return { query, headers };
   }
 }

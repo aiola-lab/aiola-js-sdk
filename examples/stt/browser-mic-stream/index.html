@@ -12,20 +12,32 @@
 <body>
     <h1>Aiola Speech-To-Text Demo</h1>
 
-    <!-- Toggles & status messages -->
+    <!-- Toggle switches & status messages -->
     <div class="toggle-container">
-        <div class="toggle-group">
-            <div id="socketToggle" class="toggle-button" title="Connect / Disconnect">
-                <i class="ti ti-plug-connected-x"></i>
+        <div class="toggle-switch">
+            <div class="switch-label">Connection</div>
+            <div class="switch-track" id="connectSwitch">
+                <div class="switch-thumb">
+                    <i class="ti ti-plug-connected-x"></i>
+                </div>
             </div>
         </div>
-        <div class="toggle-group">
-            <div id="recordingToggle" class="toggle-button" title="Start / Stop Recording">
-                <i class="ti ti-microphone-off"></i>
+        <div class="toggle-switch">
+            <div class="switch-label">Recording</div>
+            <div class="switch-track" id="recordingSwitch">
+                <div class="switch-thumb">
+                    <i class="ti ti-microphone-off"></i>
+                </div>
             </div>
         </div>
-        <span class="separator">|</span>
-        <div id="messageContainer" class="message-container">Ready to connect</div>
+        <span class="separator"></span>
+        <div id="messageContainer" class="message-container">Recording stopped</div>
+    </div>
+
+    <!-- Keywords input section -->
+    <div class="keywords-container">
+        <input type="text" id="keywordsInput" class="keywords-input" placeholder="Enter keywords (comma-separated)">
+        <button id="keywordsButton" class="keywords-button">Set Keywords</button>
     </div>
 
     <!-- Transcription output -->
