@@ -19,7 +19,7 @@ let isConnecting = false;
 let currentKeywords = {};
 
 const client = new AiolaClient({
-  apiKey: 'ak_9bd254c9068ef50ce10fc3a359bda56676d99cd1901d151c0eefc0339c0f7efc'
+  apiKey: 'YOUR_API_KEY'
 });
 
 // Initialize button states
