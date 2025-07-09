@@ -1,3 +1,11 @@
+## [1.0.3](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.2...v1.0.3) (2025-07-09)
+
+
+### Bug Fixes
+
+* default workflow_id ([bc8324a](https://github.com/aiola-lab/aiola-js-sdk/commit/bc8324a8e46286c0b2bbf923306011e635a977bb))
+* test ([7ea22ee](https://github.com/aiola-lab/aiola-js-sdk/commit/7ea22ee5982b550714f3c8270e9a19ce888cd9e4))
+
 ## [1.0.2](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.1...v1.0.2) (2025-07-09)
 
 
