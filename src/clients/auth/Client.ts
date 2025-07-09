@@ -149,7 +149,7 @@ export class Auth {
       });
 
       const data = await response.json();
-      console.log("data", data);
+
       if (!data.context?.token) {
         throw new AiolaError({
           message: "Invalid token response - no token found in data.context.token",
@@ -188,7 +188,7 @@ export class Auth {
       });
 
       const data = await response.json();
-      console.log("data", data);
+
       if (!data.jwt) {
         throw new AiolaError({
           message: "Invalid session response - no jwt found",

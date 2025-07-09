@@ -58,13 +58,10 @@ export class Stt extends AbstractClient {
     }
 
     const headers = {
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
       "X-Execution-Id": executionId,
       "X-Workflow-Id": requestOptions.workflowId || DEFAULT_WORKFLOW_ID,
       "x-lang-code": requestOptions.langCode || "en",
       "x-time-zone": requestOptions.timeZone || "UTC",
-      "Authorization": `Bearer ${accessToken}`
     }
 
     return { query, headers };
