@@ -1,6 +1,6 @@
 # aiOla JavaScript SDK
 
-The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, designed to work seamlessly in both Node.js and browser environments.
+The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, work seamlessly in both Node.js and browser environments.
 
 ## Installation
 
