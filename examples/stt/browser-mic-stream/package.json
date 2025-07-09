@@ -12,6 +12,6 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
-    "@aiola/sdk": "^0.0.2"
+    "@aiola/sdk": "^1.0.1"
   }
 }

@@ -1,7 +1,7 @@
 import { RUNTIME } from "./runtime";
 
-export const DEFAULT_BASE_URL = "https://dev-vp1-uw2-api.internal.aiola.ai";
-export const DEFAULT_AUTH_BASE_URL = "https://dev-vp1-uw2-auth.internal.aiola.ai";
+export const DEFAULT_BASE_URL = "https://apis.aiola.ai";
+export const DEFAULT_AUTH_BASE_URL = "https://auth.aiola.ai";
 
 export const DEFAULT_HEADERS = {
   "User-Agent": `@aiola/aiola-js/${RUNTIME.type}/${RUNTIME.version}`,
