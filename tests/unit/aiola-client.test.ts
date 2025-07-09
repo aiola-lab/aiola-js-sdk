@@ -1,6 +1,6 @@
 import { AiolaClient } from "../../src/AiolaClient";
 import { Auth } from "../../src/clients/auth/Client";
-import { DEFAULT_BASE_URL, DEFAULT_AUTH_BASE_URL } from "../../src/lib/constants";
+import { DEFAULT_BASE_URL, DEFAULT_AUTH_BASE_URL, DEFAULT_WORKFLOW_ID } from "../../src/lib/constants";
 
 describe("AiolaClient", () => {
   const options = { apiKey: "test-api-key", baseUrl: "https://api.aiola.com" } as const;
@@ -12,7 +12,7 @@ describe("AiolaClient", () => {
       baseUrl: "https://api.aiola.com",
       authBaseUrl: DEFAULT_AUTH_BASE_URL,
       accessToken: undefined,
-      workflowId: "9e153c70-288b-47a5-97a7-1f91273c2420"
+      workflowId: DEFAULT_WORKFLOW_ID
     });
   });
 
@@ -38,7 +38,7 @@ describe("AiolaClient", () => {
       expect(client.options.apiKey).toBe("test-key");
       expect(client.options.baseUrl).toBe(DEFAULT_BASE_URL);
       expect(client.options.authBaseUrl).toBe(DEFAULT_AUTH_BASE_URL);
-      expect(client.options.workflowId).toBe("9e153c70-288b-47a5-97a7-1f91273c2420");
+      expect(client.options.workflowId).toBe(DEFAULT_WORKFLOW_ID);
     });
 
     it("should accept accessToken in options", () => {
@@ -118,7 +118,7 @@ describe("AiolaClient", () => {
       expect(authSpy).toHaveBeenCalledWith({
         apiKey: mockApiKey,
         baseUrl: DEFAULT_AUTH_BASE_URL,
-        workflowId: "9e153c70-288b-47a5-97a7-1f91273c2420"
+        workflowId: DEFAULT_WORKFLOW_ID
       });
 
       authSpy.mockRestore();
