@@ -150,5 +150,4 @@ cd examples/stt/browser-mic-stream
 npm install
 npm run dev
 ```
-
 - Uses the [`AudioWorklet`](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) API to capture microphone audio, convert it to 16-bit PCM (16 kHz, mono), and send it through the WebSocket returned.
