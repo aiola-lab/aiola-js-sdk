@@ -65,15 +65,19 @@ import fs from 'node:fs';
 import path from "path";
 
 async function transcribeFile() {
-  const filePath = path.resolve(__dirname, "./audio.wav");
-  const file = fs.createReadStream(filePath);
-  
-  const transcript = await client.stt.transcribeFile({ 
-    file: file,
-    language: "en"
-  });
+  try {
+    const filePath = path.resolve(__dirname, "./audio.wav");
+    const file = fs.createReadStream(filePath);
+    
+    const transcript = await client.stt.transcribeFile({ 
+      file: file,
+      language: "en"
+    });
 
-  console.log(transcript);
+    console.log(transcript);
+  } catch (error) {
+    console.error('Error transcribing file:', error);
+  }
 }
 
 transcribeFile();
@@ -90,11 +94,15 @@ const client = new AiolaClient({
 });
 
 const connection = await client.stt.stream({
-  lang_code: 'en',
+  langCode: 'en',
 });
 
 connection.on('transcript', ({ transcript }) => {
   console.log('Transcript:', transcript);
+});
+
+connection.on('error', (error) => {
+  console.error('Streaming error:', error);
 });
 
 const audio = fs.createReadStream('./audio.wav');
@@ -109,14 +117,18 @@ connection.connect();
 import fs from 'node:fs';
 
 async function createFile() {
-  const audio = await client.tts.synthesize({
-    text: 'Hello, how can I help you today?',
-    voice: 'jess',
-    language: 'en',
-  });
+  try {
+    const audio = await client.tts.synthesize({
+      text: 'Hello, how can I help you today?',
+      voice: 'jess',
+      language: 'en',
+    });
 
-  const fileStream = fs.createWriteStream('./audio.wav');
-  audio.pipe(fileStream);
+    const fileStream = fs.createWriteStream('./audio.wav');
+    audio.pipe(fileStream);
+  } catch (error) {
+    console.error('Error creating audio file:', error);
+  }
 }
 
 createFile();
@@ -126,15 +138,19 @@ createFile();
 
 ```ts
 async function streamTts() {
-  const stream = await client.tts.stream({
-    text: 'Hello, how can I help you today?',
-    voice: 'jess',
-    language: 'en',
-  });
+  try {
+    const stream = await client.tts.stream({
+      text: 'Hello, how can I help you today?',
+      voice: 'jess',
+      language: 'en',
+    });
 
-  const audioChunks = [];
-  for await (const chunk of stream) {
-    audioChunks.push(chunk);
+    const audioChunks = [];
+    for await (const chunk of stream) {
+      audioChunks.push(chunk);
+    }
+  } catch (error) {
+    console.error('Error streaming TTS:', error);
   }
 }
 

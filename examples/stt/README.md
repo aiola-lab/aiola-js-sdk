@@ -18,52 +18,60 @@ const filePath = path.resolve(__dirname, "./audio.wav");
 
 // Transcribe an audio file to text
 async function transcribeFile() {
-  const audioFile = fs.createReadStream(filePath);
-  
-  const transcript = await client.stt.transcribeFile({ 
-    file: audioFile,
-    language: "en"
-  });
+  try {
+    const audioFile = fs.createReadStream(filePath);
+    
+    const transcript = await client.stt.transcribeFile({ 
+      file: audioFile,
+      language: "en"
+    });
 
-  console.log(transcript);
+    console.log(transcript);
+  } catch (error) {
+    console.error('Error transcribing file:', error);
+  }
 }
 
 // Stream audio in real-time for live transcription
 async function liveStreaming() {
-  const connection = await client.stt.stream({
-    langCode: 'en',
-  });
+  try {
+    const connection = await client.stt.stream({
+      langCode: 'en',
+    });
 
-  connection.on('transcript', (data) => {
-    console.log('Transcript:', data.transcript);
-  });
+    connection.on('transcript', (data) => {
+      console.log('Transcript:', data.transcript);
+    });
 
-  connection.on('connect', () => {
-    console.log('Connected to streaming service');
-  });
+    connection.on('connect', () => {
+      console.log('Connected to streaming service');
+    });
 
-  connection.on('disconnect', () => {
-    console.log('Disconnected from streaming service');
-  });
+    connection.on('disconnect', () => {
+      console.log('Disconnected from streaming service');
+    });
 
-  connection.on('error', (error) => {
-    console.error('Streaming error:', error);
-  });
+    connection.on('error', (error) => {
+      console.error('Streaming error:', error);
+    });
 
-  connection.connect();
+    connection.connect();
 
-  const audioFile = fs.createReadStream(filePath);
+    const audioFile = fs.createReadStream(filePath);
 
-  audioFile.on('data', (chunk) => {
-    connection.send(chunk);
-  });
+    audioFile.on('data', (chunk) => {
+      connection.send(chunk);
+    });
 
-  audioFile.on('end', () => {
-    connection.disconnect();
-  });
+    audioFile.on('end', () => {
+      connection.disconnect();
+    });
 
-  audioFile.on('error', (error) => {
-    console.error('File read error:', error);
-  });
+    audioFile.on('error', (error) => {
+      console.error('File read error:', error);
+    });
+  } catch (error) {
+    console.error('Error setting up streaming:', error);
+  }
 }
 ```

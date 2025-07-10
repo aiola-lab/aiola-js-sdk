@@ -10,42 +10,50 @@ import { AiolaClient } from '@aiola/sdk';
 import fs from 'node:fs';
 
 const client = new AiolaClient({
-  apiKey: process.env.AIOLA_API_KEY,
+  apiKey: AIOLA_API_KEY,
 });
 
 async function synthesizeToFile() {
-  const audioStream = await client.tts.synthesize({
-    text: "Hello, how can I help you today?",
-    voice: "jess",
-    language: "en",
-  });
+  try {
+    const audioStream = await client.tts.synthesize({
+      text: "Hello, how can I help you today?",
+      voice: "jess",
+      language: "en",
+    });
 
-  // Save to file
-  const fileStream = fs.createWriteStream("./output.wav");
-  audioStream.pipe(fileStream);
+    // Save to file
+    const fileStream = fs.createWriteStream("./output.wav");
+    audioStream.pipe(fileStream);
 
-  fileStream.on('finish', () => {
-    console.log("Audio file saved successfully!");
-  });
+    fileStream.on('finish', () => {
+      console.log("Audio file saved successfully!");
+    });
 
-  fileStream.on('error', (error) => {
-    console.error("Error saving file:", error);
-  });
+    fileStream.on('error', (error) => {
+      console.error("Error saving file:", error);
+    });
+  } catch (error) {
+    console.error("Error synthesizing audio:", error);
+  }
 }
 
 async function streamTts() {
-  const stream = await client.tts.stream({
-    text: "Hello, this is a streaming example of text-to-speech synthesis.",
-    voice: "jess",
-    language: "en",
-  });
-  
-  // Collect audio chunks
-  const audioChunks = [];
-  for await (const chunk of stream) {
-    audioChunks.push(chunk);
+  try {
+    const stream = await client.tts.stream({
+      text: "Hello, this is a streaming example of text-to-speech synthesis.",
+      voice: "jess",
+      language: "en",
+    });
+    
+    // Collect audio chunks
+    const audioChunks = [];
+    for await (const chunk of stream) {
+      audioChunks.push(chunk);
+    }
+    
+    // Process chunks as needed (e.g., play audio, save to buffer, etc.)
+  } catch (error) {
+    console.error("Error streaming TTS:", error);
   }
-  
-  // Process chunks as needed (e.g., play audio, save to buffer, etc.)
 }
 ```
