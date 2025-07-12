@@ -17,6 +17,22 @@ async function startStreaming() {
 
   connection.on('connect', () => {
     console.log("Connected to Streaming service");
+
+    const recording = new SoxRecording({
+      sampleRate: 16000,
+      channels: 1,
+      audioType: "wav",
+    });
+  
+    const microphoneStream = recording.stream();
+  
+    microphoneStream.on('data', (chunk) => {
+      connection.send(chunk);
+    });
+  
+    microphoneStream.on('error', (err) => {
+      console.error('Recording error:', err);
+    });
   });
 
   connection.on('transcript', (data) => {
@@ -28,22 +44,6 @@ async function startStreaming() {
   });
 
   connection.connect();
-
-  const recording = new SoxRecording({
-    sampleRate: 16000,
-    channels: 1,
-    audioType: "wav",
-  });
-
-  const microphoneStream = recording.stream();
-
-  microphoneStream.on('data', (chunk) => {
-    connection.send(chunk);
-  });
-
-  microphoneStream.on('error', (err) => {
-    console.error('Recording error:', err);
-  });
 }
 
 startStreaming();
