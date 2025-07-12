@@ -61,16 +61,14 @@ const client = new AiolaClient({
 ### Speech-to-Text – transcribe file
 
 ```ts
-import fs from 'node:fs';
-import path from "path";
-
 async function transcribeFile() {
   try {
-    const filePath = path.resolve(__dirname, "./audio.wav");
-    const file = fs.createReadStream(filePath);
+    const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
+    const audioBuffer = await response.arrayBuffer();
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
     
     const transcript = await client.stt.transcribeFile({ 
-      file: file,
+      file: audioBlob,
       language: "en"
     });
 
@@ -87,28 +85,42 @@ transcribeFile();
 
 ```ts
 import { AiolaClient } from '@aiola/sdk';
-import fs from 'node:fs';
 
 const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
+  apiKey: 'YOUR_API_KEY',
 });
 
-const connection = await client.stt.stream({
-  langCode: 'en',
-});
+// Stream audio in real-time for live transcription
+async function liveStreaming() {
+  const connection = await client.stt.stream({
+    langCode: 'en',
+  });
 
-connection.on('transcript', ({ transcript }) => {
-  console.log('Transcript:', transcript);
-});
+  connection.on('transcript', (data) => {
+    console.log('Transcript:', data.transcript);
+  });
 
-connection.on('error', (error) => {
-  console.error('Streaming error:', error);
-});
+  connection.on('connect', async () => {
+    console.log('Connected to streaming service');
+    
+    const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
+    const audioData = await response.arrayBuffer();
 
-const audio = fs.createReadStream('./audio.wav');
-audio.on('data', (chunk) => connection.send(chunk));
+    connection.send(Buffer.from(audioData));
+  });
 
-connection.connect();
+  connection.on('disconnect', () => {
+    console.log('Disconnected from streaming service');
+  });
+
+  connection.on('error', (error) => {
+    console.error('Streaming error:', error);
+  });
+
+  connection.connect();
+}
+
+liveStreaming();
 ```
 
 ### Text-to-Speech
