@@ -10,7 +10,7 @@ import { AiolaClient } from '@aiola/sdk';
 import fs from 'node:fs';
 
 const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
+  apiKey: 'YOUR_API_KEY',
 });
 
 async function synthesizeToFile() {
