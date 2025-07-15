@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.0...v2.0.1) (2025-07-15)
+
+
+### Bug Fixes
+
+* version bump ([2ba16e6](https://github.com/aiola-lab/aiola-js-sdk/commit/2ba16e604b6665db61a1cb9e00061845cbee2157))
+
 # [2.0.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.3...v2.0.0) (2025-07-15)
 
 
