@@ -1,3 +1,16 @@
+# [2.0.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.3...v2.0.0) (2025-07-15)
+
+
+### Code Refactoring
+
+* simplify authentication by removing TokenManager ([1d79878](https://github.com/aiola-lab/aiola-js-sdk/commit/1d798782e3b6bca43e28d81fe02ae1be80704b6e))
+
+
+### BREAKING CHANGES
+
+* Users must now generate access tokens using AiolaClient.grantToken()
+and initialize the client with the access token directly.
+
 ## [1.0.3](https://github.com/aiola-lab/aiola-js-sdk/compare/v1.0.2...v1.0.3) (2025-07-09)
 
 
