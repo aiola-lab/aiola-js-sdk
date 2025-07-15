@@ -16,7 +16,7 @@ yarn add @aiola/sdk
 
 The aiOla SDK uses a **two-step authentication process**:
 
-1. **Generate Access Token**: Use your API key to create a temporary access token
+1. **Generate Access Token**: Use your API key to create a temporary access token, save it for later use
 2. **Create Client**: Use the access token to instantiate the client, make sure to save
 
 #### Step 1: Generate Access Token
