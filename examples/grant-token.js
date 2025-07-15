@@ -6,6 +6,7 @@ async function grantToken() {
   try {
     const { accessToken } = await AiolaClient.grantToken({ apiKey });
     
+    // Save the token
     console.log(`Token: ${accessToken}`);
 
     // Create a new client using only the access token
