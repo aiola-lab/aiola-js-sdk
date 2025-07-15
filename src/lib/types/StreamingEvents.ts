@@ -91,10 +91,19 @@ export interface ClientToServerEvents {
   binary_data: (data: Buffer) => void;
 }
 
-export type StreamingEventName = keyof Omit<ServerToClientEvents, 'connect' | 'disconnect' | 'error' | 'connect_error'>;
+export type StreamingEventName = keyof Omit<
+  ServerToClientEvents,
+  "connect" | "disconnect" | "error" | "connect_error"
+>;
 
-export type StreamingEventData<T extends StreamingEventName> = Parameters<ServerToClientEvents[T]>[0];
+export type StreamingEventData<T extends StreamingEventName> = Parameters<
+  ServerToClientEvents[T]
+>[0];
 
-export type ConnectionEventName = 'connect' | 'disconnect' | 'error' | 'connect_error';
+export type ConnectionEventName =
+  | "connect"
+  | "disconnect"
+  | "error"
+  | "connect_error";
 
 export type ValidEventName = StreamingEventName | ConnectionEventName;

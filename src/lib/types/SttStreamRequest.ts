@@ -1,4 +1,3 @@
-
 export interface TranslationPayload {
   src_lang_code: string;
   dst_lang_code: string;
@@ -9,7 +8,6 @@ export interface EntityDetectionFromListPayload {
 }
 
 export type EntityDetectionPayload = Record<string, never>;
-
 
 export type KeyPhrasesPayload = Record<string, never>;
 
@@ -41,7 +39,7 @@ type TaskPayloads = {
   AUTO_CHAPTERS: AutoChaptersPayload;
 };
 
-export type TasksConfig = Partial<TaskPayloads>; 
+export type TasksConfig = Partial<TaskPayloads>;
 
 export interface SttStreamRequest {
   workflowId?: string;

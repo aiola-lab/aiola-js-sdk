@@ -1,4 +1,4 @@
-import { AiolaClient } from "@aiola/sdk";
+import { AiolaClient } from "@aiola/sdk"
 
 // DOM Elements
 const connectSwitch = document.getElementById("connectSwitch");
@@ -18,9 +18,8 @@ let isConnected = false;
 let isConnecting = false;
 let currentKeywords = {};
 
-const client = new AiolaClient({
-  apiKey: 'YOUR_API_KEY'
-});
+// Client instance will be created after token generation
+let client;
 
 // Initialize button states
 function initializeButtons() {
@@ -29,7 +28,37 @@ function initializeButtons() {
   showMessage("Recording stopped");
 }
 
+async function initializeClient() {
+  if (client) return client;
+  
+  const apiKey = prompt("Please enter your API key:");
+  if (!apiKey) {
+    throw new Error("API key is required");
+  }
+  
+  try {
+    showMessage("Generating access token...");
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: apiKey,
+    });
+    
+    client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    showMessage("Client initialized successfully");
+    return client;
+  } catch (error) {
+    showMessage(`Failed to initialize client: ${error.message}`, true);
+    throw error;
+  }
+}
+
 async function createStreamingConnection() {
+  if (!client) {
+    await initializeClient();
+  }
+  
   connection = await client.stt.stream({
     langCode: "en",
     keywords: currentKeywords

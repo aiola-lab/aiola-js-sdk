@@ -1,126 +1,137 @@
 import { AiolaError } from "../../lib/errors";
 import { createUnauthenticatedFetch } from "../../lib/fetch";
-import { ClientConfig, AuthOptions } from "../../lib/types";
+import {
+  ClientConfig,
+  AuthOptions,
+  SessionCloseResponse,
+  GrantTokenResponse,
+  JwtPayload,
+} from "../../lib/types";
 
 export class Auth {
-  private accessToken: string | null = null;
-  private sessionId: string | null = null;
-  private readonly fetch: (url: string, init?: RequestInit) => Promise<Response>;
+  private readonly fetch: (
+    url: string,
+    init?: RequestInit,
+  ) => Promise<Response>;
 
   constructor() {
     // Use unauthenticated fetch for auth endpoints
-    this.fetch = createUnauthenticatedFetch('');
+    this.fetch = createUnauthenticatedFetch("");
   }
 
   /**
-   * Get or create an access token based on provided credentials
-   * Implements priority-based resolution: accessToken > apiKey
+   * Get access token from client configuration
+   * Now only accepts access tokens - API key support removed
    */
   async getAccessToken(opts: ClientConfig): Promise<string> {
-    const { accessToken, apiKey, authBaseUrl, workflowId } = opts;
+    const { accessToken } = opts;
 
-    if (accessToken) {
-      if (!this.isSessionValid(accessToken)) {
-        throw new AiolaError({
-          message: "Provided access token is expired",
-          code: "TOKEN_EXPIRED"
-        });
-      }
-      return accessToken;
-    }
-
-    // Priority 2: API Key (requires token generation)
-    if (apiKey) {
-      const session = await this.getOrCreateSession({
-        apiKey,
-        baseUrl: authBaseUrl,
-        workflowId
+    if (!this.isSessionValid(accessToken)) {
+      throw new AiolaError({
+        message: "Provided access token is expired. Please generate a new token using AiolaClient.grantToken()",
+        code: "TOKEN_EXPIRED",
       });
-      if (session) {
-        this.accessToken = session.accessToken;
-        this.sessionId = session.sessionId;
-        return session.accessToken;
-      }
     }
 
-    throw new AiolaError({
-      message: "No valid credentials provided. Please provide either apiKey or accessToken. You can generate an accessToken using AiolaClient.grantToken(apiKey).",
-      code: "MISSING_CREDENTIALS"
-    });
+    return accessToken;
   }
 
-  /**
-   * Generate and return a new access token using the provided API key
-   * This is a public method that clients can use to get an access token directly
-   * This method always generates a fresh token and does not use cached sessions
-   * 
-   * @param opts - The configuration options
-   * @returns Promise<string> - The generated access token
-   */
-  async grantToken(opts: Required<AuthOptions>): Promise<string> {
-    return Auth.grantToken(opts);
-  }
 
   /**
-   * Static method to generate an access token from an API key without creating an Auth instance
-   * This is the recommended way to generate tokens in backend services
-   * 
+   * Generate an access token from an API key
+   * Server handles concurrency limits and will return appropriate errors
+   *
    * @param opts - The configuration options
-   * @returns Promise<string> - The generated access token
+   * @returns Promise<GrantTokenResponse> - The generated access token
    */
-  static async grantToken(opts: Required<AuthOptions>): Promise<string> {
+  static async grantToken(
+    opts: Required<AuthOptions>,
+  ): Promise<GrantTokenResponse> {
     if (!opts.apiKey) {
       throw new AiolaError({
         message: "API key is required to generate access token",
-        code: "MISSING_API_KEY"
+        code: "MISSING_API_KEY",
       });
     }
 
     try {
-      const { baseUrl, workflowId, apiKey } = opts;
+      const { authBaseUrl, workflowId, apiKey } = opts;
+      const fetch = createUnauthenticatedFetch(authBaseUrl);
 
-      const tokenEndpoint = `${baseUrl}/voip-auth/apiKey2Token`;
-      const sessionEndpoint = `${baseUrl}/voip-auth/session`;
-      
-      // Create fetch function
-      const fetchFn = createUnauthenticatedFetch(baseUrl);
-
-      // Generate temporary token
-      const tokenResponse = await fetchFn(tokenEndpoint, {  
+      // Step 1: Generate temporary token
+      const tokenResponse = await fetch(`${authBaseUrl}/voip-auth/apiKey2Token`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
+          Authorization: `Bearer ${apiKey}`,
+        },
       });
 
+      if (!tokenResponse.ok) {
+        // Check if this is a concurrency limit error (409 Conflict)
+        const errorData = await tokenResponse.json().catch(() => null);
+        
+        if (tokenResponse.status === 409 || (errorData && errorData.code === "MAX_CONCURRENCY_REACHED")) {
+          throw new AiolaError({
+            message: errorData?.message || "Max concurrency limit reached for API key. Please wait for existing sessions to expire or close them manually.",
+            code: "MAX_CONCURRENCY_REACHED",
+            details: errorData,
+          });
+        }
+        
+        throw new AiolaError({
+          message: `Token generation failed: ${tokenResponse.status} ${tokenResponse.statusText}`,
+          code: "TOKEN_GENERATION_ERROR",
+        });
+      }
+
       const tokenData = await tokenResponse.json();
-      console.log("tokenData", tokenData);
       if (!tokenData.context?.token) {
         throw new AiolaError({
           message: "Invalid token response - no token found in data.context.token",
-          code: "INVALID_TOKEN_RESPONSE"
+          code: "INVALID_TOKEN_RESPONSE",
         });
       }
 
-      const sessionResponse = await fetchFn(sessionEndpoint, {
+      // Step 2: Create session
+      const sessionResponse = await fetch(`${authBaseUrl}/voip-auth/session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${tokenData.context.token}`
+          Authorization: `Bearer ${tokenData.context.token}`,
         },
-        body: JSON.stringify({ workflow_id: workflowId })
+        body: JSON.stringify({ workflow_id: workflowId }),
       });
 
-      const sessionData = await sessionResponse.json();
-      console.log("sessionData", sessionData);
-      if (!sessionData.jwt) {
+      if (!sessionResponse.ok) {
+        // Check if this is a concurrency limit error (409 Conflict)
+        const errorData = await sessionResponse.json().catch(() => null);
+        
+        if (sessionResponse.status === 409 || (errorData && errorData.code === "MAX_CONCURRENCY_REACHED")) {
+          throw new AiolaError({
+            message: errorData?.message || "Max concurrency limit reached for API key. Please wait for existing sessions to expire or close them manually.",
+            code: "MAX_CONCURRENCY_REACHED",
+            details: errorData,
+          });
+        }
+        
         throw new AiolaError({
-          message: "Invalid session response - no jwt found",
-          code: "INVALID_SESSION_RESPONSE"
+          message: `Session creation failed: ${sessionResponse.status} ${sessionResponse.statusText}`,
+          code: "SESSION_CREATION_ERROR",
         });
       }
 
-      return sessionData.jwt;
+      const sessionData = await sessionResponse.json();
+      if (!sessionData.jwt) {
+        throw new AiolaError({
+          message: "Invalid session response - no jwt found",
+          code: "INVALID_SESSION_RESPONSE",
+        });
+      }
+
+      return {
+        accessToken: sessionData.jwt,
+        sessionId: sessionData.sessionId,
+      };
     } catch (error) {
       if (error instanceof AiolaError) {
         throw error;
@@ -128,7 +139,7 @@ export class Auth {
       throw new AiolaError({
         message: `Token generation failed: ${(error as Error).message}`,
         code: "TOKEN_GENERATION_ERROR",
-        details: error
+        details: error,
       });
     }
   }
@@ -137,23 +148,24 @@ export class Auth {
    * Generate a temporary JWT token from API key
    */
   async apiKeyToToken(opts: Required<AuthOptions>): Promise<string> {
-    const { apiKey, baseUrl } = opts;
+    const { apiKey, authBaseUrl } = opts;
 
     try {
-      const tokenEndpoint = `${baseUrl}/voip-auth/apiKey2Token`;
+      const tokenEndpoint = `${authBaseUrl}/voip-auth/apiKey2Token`;
       const response = await this.fetch(tokenEndpoint, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
+          Authorization: `Bearer ${apiKey}`,
+        },
       });
 
       const data = await response.json();
 
       if (!data.context?.token) {
         throw new AiolaError({
-          message: "Invalid token response - no token found in data.context.token",
-          code: "INVALID_TOKEN_RESPONSE"
+          message:
+            "Invalid token response - no token found in data.context.token",
+          code: "INVALID_TOKEN_RESPONSE",
         });
       }
 
@@ -165,7 +177,7 @@ export class Auth {
       throw new AiolaError({
         message: `Token generation failed: ${(error as Error).message}`,
         code: "TOKEN_GENERATION_ERROR",
-        details: error
+        details: error,
       });
     }
   }
@@ -173,18 +185,22 @@ export class Auth {
   /**
    * Create an access token (session JWT) using the temporary token
    */
-  async createSession(token: string, workflowId: string, baseUrl: string): Promise<{accessToken: string, sessionId: string}> {
+  async createSession(
+    token: string,
+    workflowId: string,
+    authBaseUrl: string,
+  ): Promise<GrantTokenResponse> {
     try {
       const body = { workflow_id: workflowId };
-      const sessionEndpoint = `${baseUrl}/voip-auth/session`;
+      const sessionEndpoint = `${authBaseUrl}/voip-auth/session`;
 
       const response = await this.fetch(sessionEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -192,11 +208,11 @@ export class Auth {
       if (!data.jwt) {
         throw new AiolaError({
           message: "Invalid session response - no jwt found",
-          code: "INVALID_SESSION_RESPONSE"
+          code: "INVALID_SESSION_RESPONSE",
         });
       }
 
-      return {accessToken: data.jwt, sessionId: data.sessionId};
+      return { accessToken: data.jwt, sessionId: data.sessionId };
     } catch (error) {
       if (error instanceof AiolaError) {
         throw error;
@@ -204,39 +220,45 @@ export class Auth {
       throw new AiolaError({
         message: `Session creation failed: ${(error as Error).message}`,
         code: "SESSION_CREATION_ERROR",
-        details: error
+        details: error,
       });
     }
   }
 
   /**
-   * Get cached session or create new one
+   * Close a session
    */
-  private async getOrCreateSession(opts: Required<AuthOptions>): Promise<{accessToken: string, sessionId: string} | null> {
-    // Check if cached session is still valid
-    const { apiKey, workflowId, baseUrl } = opts;
-
-    if (this.accessToken && this.isSessionValid(this.accessToken)) {
-        return {accessToken: this.accessToken, sessionId: this.sessionId!};
-    }
-    
-    // Create new session
+  static async closeSession(
+    accessToken: string,
+    opts: Required<AuthOptions>,
+  ): Promise<SessionCloseResponse> {
     try {
-      const token = await this.apiKeyToToken({ apiKey, baseUrl, workflowId });
-      const session = await this.createSession(token, workflowId, baseUrl);
+      const { authBaseUrl } = opts;
+      const sessionEndpoint = `${authBaseUrl}/voip-auth/session`;
 
-      // Cache the session
-      this.accessToken = session.accessToken;
-      this.sessionId = session.sessionId;
-      
-      return session;
+      const response = await createUnauthenticatedFetch(authBaseUrl)(
+        sessionEndpoint,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      return data;
     } catch (error) {
-      // Clean up invalid cache entry
-      this.accessToken = null;
-      this.sessionId = null;
-      throw error;
+      throw new AiolaError({
+        message: `Session closing failed: ${(error as Error).message}`,
+        code: "SESSION_CLOSING_ERROR",
+        details: error,
+      });
     }
   }
+
 
   /**
    * Check if session is still valid (not expired)
@@ -245,47 +267,64 @@ export class Auth {
     const now = Math.floor(Date.now() / 1000); // Convert to seconds
     const bufferTime = 5 * 60; // 5 minutes buffer in seconds
     const decoded = this.parseJWTPayload(accessToken);
-    return decoded.exp > (now + bufferTime);
+    return decoded.exp > now + bufferTime;
   }
 
   /**
-   * Clear specific session from cache
+   * Static method to check if a token is still valid
    */
-  clearSession(): void {
-    this.accessToken = null;
-    this.sessionId = null;
+  static isTokenValid(accessToken: string): boolean {
+    try {
+      const decoded = Auth.parseJWTPayload(accessToken);
+      const now = Math.floor(Date.now() / 1000);
+      const bufferTime = 5 * 60; // 5 minutes buffer
+      return decoded.exp > now + bufferTime;
+    } catch {
+      return false;
+    }
   }
+
 
   /**
    * Parse JWT payload without verification (for expiration check)
    */
-  private parseJWTPayload(token: string): {exp: number, iat: number} {
+  private parseJWTPayload(token: string): JwtPayload {
+    return Auth.parseJWTPayload(token);
+  }
+
+  /**
+   * Static method to parse JWT payload without verification (for expiration check)
+   */
+  static parseJWTPayload(token: string): JwtPayload {
     try {
-      const parts = token.split('.');
+      const parts = token.split(".");
       if (parts.length !== 3) {
-        throw new Error('Invalid JWT format');
+        throw new Error("Invalid JWT format");
       }
-      
+
       const payload = parts[1];
       // Handle base64url encoding
-      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
-      
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64.padEnd(
+        base64.length + ((4 - (base64.length % 4)) % 4),
+        "=",
+      );
+
       let decoded: string;
-      if (typeof atob !== 'undefined') {
+      if (typeof atob !== "undefined") {
         // Browser environment
         decoded = atob(padded);
       } else {
         // Node.js environment
-        decoded = Buffer.from(padded, 'base64').toString('utf-8');
+        decoded = Buffer.from(padded, "base64").toString("utf-8");
       }
-      
+
       return JSON.parse(decoded);
     } catch (error) {
       throw new AiolaError({
-        message: 'Failed to parse JWT token',
-        code: 'INVALID_JWT',
-        details: error
+        message: "Failed to parse JWT token",
+        code: "INVALID_JWT",
+        details: error,
       });
     }
   }

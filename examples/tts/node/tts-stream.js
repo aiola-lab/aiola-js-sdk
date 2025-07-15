@@ -1,24 +1,40 @@
 const { AiolaClient } = require("../../../dist/main/index.js");
 
-const AIOLA_API_KEY = process.env.AIOLA_API_KEY || "YOUR_API_KEY";
-
-const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
-});
-
 async function streamTts() {
-  const stream = await client.tts.stream({
-    text: "Hello, how can I help you today?",
-    voice: "jess",
-    language: "en",
-  });
+  const apiKey = process.env.AIOLA_API_KEY || "YOUR_API_KEY";
   
-  const audioChunks = [];
-  for await (const chunk of stream) {
-    audioChunks.push(chunk);
-  }
+  try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: apiKey
+    });
+    
+    console.log("Access token generated successfully");
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Stream audio
+    const stream = await client.tts.stream({
+      text: "Hello, how can I help you today?",
+      voice: "jess",
+      language: "en",
+    });
+    
+    const audioChunks = [];
+    for await (const chunk of stream) {
+      audioChunks.push(chunk);
+    }
 
-  console.log(audioChunks);
+    console.log("Audio chunks received:", audioChunks.length);
+  } catch (error) {
+    console.error("Error:", error.message);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
+  }
 }
 
 streamTts();

@@ -18,7 +18,7 @@ interface MinimalResponse {
 
 describe("Tts Client – public usage", () => {
   const options = { 
-    apiKey: "test-key", 
+    accessToken: "test-token", 
     baseUrl: "https://api.aiola.com",
     authBaseUrl: "https://auth.aiola.com",
     workflowId: DEFAULT_WORKFLOW_ID
