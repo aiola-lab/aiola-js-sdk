@@ -68,7 +68,7 @@ describe("Stt Client – basic functionality", () => {
     } as any;
     
     stt = new Stt({ 
-      apiKey: "test-key", 
+      accessToken: "test-token", 
       baseUrl: "https://api.aiola.com",
       authBaseUrl: "https://auth.aiola.com",
       workflowId: DEFAULT_WORKFLOW_ID
@@ -142,7 +142,7 @@ describe("Stt Client – basic functionality", () => {
     expect(socket).toBeDefined();
   });
 
-  it("should handle flow_id and execution_id parameters", () => {
+  it("should handle workflow_id and execution_id parameters", () => {
     const streamRequest = {
       workflowId: "custom-flow-123",
       executionId: "custom-execution-456",
@@ -272,7 +272,7 @@ describe("Stt Client – transcribeFile method", () => {
     } as any;
     
     stt = new Stt({ 
-      apiKey: "test-key", 
+      accessToken: "test-token", 
       baseUrl: "https://api.aiola.com",
       authBaseUrl: "https://auth.aiola.com",
       workflowId: DEFAULT_WORKFLOW_ID

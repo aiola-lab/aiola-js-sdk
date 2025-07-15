@@ -42,7 +42,7 @@ mockCrossFetch.mockImplementation(() => Promise.resolve({ ok: true, json: () => 
 
 describe("createAuthenticatedFetch", () => {
   const opts: ClientConfig = {
-    apiKey: "secret-api-key",
+    accessToken: "secret-access-token",
     baseUrl: "https://api.aiola.com",
     authBaseUrl: "https://auth.aiola.com",
     workflowId: "default-workflow-id",

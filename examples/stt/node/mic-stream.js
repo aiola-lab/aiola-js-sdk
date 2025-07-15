@@ -1,49 +1,68 @@
 const { AiolaClient } = require("../../../dist/main/index.js");
-const { SoxRecording } = require("./sox.js");
-
-const AIOLA_API_KEY = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
-
-const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
-});
+const { SoxRecording } = require("./sox.js"); // brew install sox
 
 async function startStreaming() {
-  const connection = await client.stt.stream({
-    langCode: "en",
-    keywords: {
-      aiola: "aiOla",
-    },
-  });
-
-  connection.on('connect', () => {
-    console.log("Connected to Streaming service");
-
-    const recording = new SoxRecording({
-      sampleRate: 16000,
-      channels: 1,
-      audioType: "wav",
-    });
+  const apiKey = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
   
-    const microphoneStream = recording.stream();
-  
-    microphoneStream.on('data', (chunk) => {
-      connection.send(chunk);
+  try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: apiKey,
     });
-  
-    microphoneStream.on('error', (err) => {
-      console.error('Recording error:', err);
+    
+    console.log("Access token generated successfully");
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
     });
-  });
+    
+    // Step 3: Start streaming
+    const connection = await client.stt.stream({
+      langCode: "en",
+    });
 
-  connection.on('transcript', (data) => {
-    console.log("Transcript:", data.transcript);
-  });
+    connection.on('connect', () => {
+      console.log("Connected to Streaming service");
+      
+      // brew install sox
+      const recording = new SoxRecording({
+        sampleRate: 16000,
+        channels: 1,
+        audioType: "wav",
+      });
+    
+      const microphoneStream = recording.stream();
+    
+      microphoneStream.on('data', (chunk) => {
+        connection.send(chunk);
+      });
+    
+      microphoneStream.on('error', (err) => {
+        console.error('Recording error:', err);
+      });
+    });
 
-  connection.on('disconnect', () => {
-    console.log("Disconnected from Streaming service");
-  });
+    connection.on('transcript', (data) => {
+      console.log("Transcript:", data.transcript);
+    });
 
-  connection.connect();
+    connection.on('disconnect', () => {
+      console.log("Disconnected from Streaming service");
+    });
+
+    connection.on('error', (error) => {
+      console.error("Streaming error:", error);
+    });
+
+    connection.connect();
+    
+  } catch (error) {
+    console.error("Error:", error.message);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
+  }
 }
 
 startStreaming();

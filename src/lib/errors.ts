@@ -53,36 +53,39 @@ export class AiolaError extends Error {
     try {
       // Read the response body once as text to avoid stream consumption issues
       const responseText = await response.text();
-      
+
       if (responseText) {
         // Try to parse as JSON first
-          const payload = JSON.parse(responseText);
-          
-          if (typeof payload === "object" && payload !== null) {
-            // The AIOLA API typically wraps the error under an `error` property but
-            // we also fall back to common shapes.
-            const errPayload =
-              "error" in payload && typeof (payload).error === "object"
-                ? (payload).error
-                : payload;
+        const payload = JSON.parse(responseText);
 
-            message = errPayload.message ?? message;
-            code = errPayload.code;
-            details = errPayload.details ?? errPayload;
-          }
+        if (typeof payload === "object" && payload !== null) {
+          // The AIOLA API typically wraps the error under an `error` property but
+          // we also fall back to common shapes.
+          const errPayload =
+            "error" in payload && typeof payload.error === "object"
+              ? payload.error
+              : payload;
+
+          message = errPayload.message ?? message;
+          code = errPayload.code;
+          details = errPayload.details ?? errPayload;
+        }
       }
     } catch (textError) {
       // If we can't read the response body at all, include error info
       details = {
-        textError: textError instanceof Error ? textError.message : String(textError),
+        textError:
+          textError instanceof Error ? textError.message : String(textError),
         responseInfo: {
           status: response.status,
           statusText: response.statusText,
-          headers: response.headers ? Object.fromEntries(response.headers.entries()) : {}
-        }
+          headers: response.headers
+            ? Object.fromEntries(response.headers.entries())
+            : {},
+        },
       };
     }
 
     return new AiolaError({ message, status: response.status, code, details });
   }
-} 
+}

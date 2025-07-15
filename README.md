@@ -12,63 +12,131 @@ yarn add @aiola/sdk
 
 ## Usage
 
-### Instantiate the client
+### Authentication
 
-```ts
+The aiOla SDK uses a **two-step authentication process**:
+
+1. **Generate Access Token**: Use your API key to create a temporary access token
+2. **Create Client**: Use the access token to instantiate the client, make sure to save
+
+This approach provides better security and proper session management.
+
+#### Step 1: Generate Access Token
+
+```typescript
 import { AiolaClient } from '@aiola/sdk';
 
-const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
+const { accessToken, sessionId } = await AiolaClient.grantToken({
+  apiKey: 'your-api-key'
 });
 ```
 
-#### Using Access Token
+#### Step 2: Create Client
 
-Create a client using an access token directly:
-
-```ts
+```typescript
 const client = new AiolaClient({
-  accessToken: YOUR_ACCESS_TOKEN,
+  accessToken: accessToken
 });
 ```
 
-#### Create Access Token
+#### Complete Example
 
-Create a temporary access token from an API key:
+```typescript
+import { AiolaClient } from '@aiola/sdk';
+import fs from 'fs';
 
-```ts
-const accessToken = await AiolaClient.grantToken(AIOLA_API_KEY);
+async function example() {
+  try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: process.env.AIOLA_API_KEY!
+    });
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Use client for API calls
+    const audioFile = fs.createReadStream('./audio.wav');
+    const transcript = await client.stt.transcribeFile({
+      file: audioFile,
+      language: 'en'
+    });
+    
+    console.log('Transcript:', transcript);
+    
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
 
-const client = new AiolaClient({ accessToken });
+example();
 ```
 
-This is useful for:
-- **Backend-Frontend separation**: Generate temporary tokens in backend, use in frontend
-- **Security**: Share access tokens instead of API keys
-- **Token management**: Implement custom authentication flows
+#### Error Handling
+
+The SDK automatically handles common scenarios like concurrency limits:
+
+```typescript
+try {
+  const { accessToken } = await AiolaClient.grantToken({
+    apiKey: 'your-api-key'
+  });
+} catch (error) {
+  if (error.code === 'MAX_CONCURRENCY_REACHED') {
+    console.log('Concurrency limit reached. Please wait for existing sessions to expire.');
+  }
+}
+```
+
+#### Session Management
+
+**Close Session on Server:**
+```typescript
+// Terminates the session on the server
+await AiolaClient.closeSession(accessToken, {
+  apiKey: 'your-api-key'
+});
+```
 
 #### Custom base URL (enterprises)
 
-Direct the SDK to use your own endpoint by providing the `baseUrl` option:
+```typescript
+const { accessToken } = await AiolaClient.grantToken({
+  apiKey: 'your-api-key',
+  authBaseUrl: 'https://mycompany.auth.aiola.ai',
+});
 
-```ts
 const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
-  baseUrl: 'https://api.mycompany.aiola.ai',
+  accessToken: accessToken,
+  baseUrl: 'https://mycompany.api.aiola.ai',
 });
 ```
 
 ### Speech-to-Text – transcribe file
 
-```ts
+```typescript
+import { AiolaClient } from '@aiola/sdk';
+import fs from 'fs';
+
 async function transcribeFile() {
   try {
-    const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
-    const audioBuffer = await response.arrayBuffer();
-    const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: process.env.AIOLA_API_KEY!
+    });
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Transcribe file
+    const file = fs.createReadStream('path/to/your/audio.wav');
     
     const transcript = await client.stt.transcribeFile({ 
-      file: audioBlob,
+      file: file,
       language: "en"
     });
 
@@ -83,41 +151,52 @@ transcribeFile();
 
 ### Speech-to-Text – live streaming
 
-```ts
+```typescript
 import { AiolaClient } from '@aiola/sdk';
-
-const client = new AiolaClient({
-  apiKey: 'YOUR_API_KEY',
-});
 
 // Stream audio in real-time for live transcription
 async function liveStreaming() {
-  const connection = await client.stt.stream({
-    langCode: 'en',
-  });
-
-  connection.on('transcript', (data) => {
-    console.log('Transcript:', data.transcript);
-  });
-
-  connection.on('connect', async () => {
-    console.log('Connected to streaming service');
+  try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: process.env.AIOLA_API_KEY
+    });
     
-    const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
-    const audioData = await response.arrayBuffer();
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Start streaming
+    const connection = await client.stt.stream({
+      langCode: 'en',
+    });
 
-    connection.send(Buffer.from(audioData));
-  });
+    connection.on('transcript', (data) => {
+      console.log('Transcript:', data.transcript);
+    });
 
-  connection.on('disconnect', () => {
-    console.log('Disconnected from streaming service');
-  });
+    connection.on('connect', async () => {
+      console.log('Connected to streaming service');
+      
+      const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
+      const audioData = await response.arrayBuffer();
 
-  connection.on('error', (error) => {
-    console.error('Streaming error:', error);
-  });
+      connection.send(Buffer.from(audioData));
+    });
 
-  connection.connect();
+    connection.on('disconnect', () => {
+      console.log('Disconnected from streaming service');
+    });
+
+    connection.on('error', (error) => {
+      console.error('Streaming error:', error);
+    });
+
+    connection.connect();
+  } catch (error) {
+    console.error('Error setting up streaming:', error);
+  }
 }
 
 liveStreaming();
@@ -125,11 +204,23 @@ liveStreaming();
 
 ### Text-to-Speech
 
-```ts
-import fs from 'node:fs';
+```typescript
+import fs from 'fs';
+import { AiolaClient } from '@aiola/sdk';
 
 async function createFile() {
   try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: process.env.AIOLA_API_KEY!
+    });
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Generate audio
     const audio = await client.tts.synthesize({
       text: 'Hello, how can I help you today?',
       voice: 'jess',
@@ -138,6 +229,8 @@ async function createFile() {
 
     const fileStream = fs.createWriteStream('./audio.wav');
     audio.pipe(fileStream);
+    
+    console.log('Audio file created successfully');
   } catch (error) {
     console.error('Error creating audio file:', error);
   }
@@ -148,19 +241,34 @@ createFile();
 
 ### Text-to-Speech – streaming
 
-```ts
+```typescript
+import { AiolaClient } from '@aiola/sdk';
+
 async function streamTts() {
   try {
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: process.env.AIOLA_API_KEY!
+    });
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+    
+    // Step 3: Stream audio
     const stream = await client.tts.stream({
       text: 'Hello, how can I help you today?',
       voice: 'jess',
       language: 'en',
     });
 
-    const audioChunks = [];
+    const audioChunks: Buffer[] = [];
     for await (const chunk of stream) {
       audioChunks.push(chunk);
     }
+    
+    console.log('Audio chunks received:', audioChunks.length);
   } catch (error) {
     console.error('Error streaming TTS:', error);
   }

@@ -1,8 +1,18 @@
-import {AiolaClientOptions, AuthOptions, ClientConfig} from "./lib/types";
+import {
+  AiolaClientOptions,
+  AuthOptions,
+  ClientConfig,
+  SessionCloseResponse,
+  GrantTokenResponse,
+} from "./lib/types";
 import { Stt } from "./clients/stt";
 import { Tts } from "./clients/tts";
 import { Auth } from "./clients/auth";
-import { DEFAULT_AUTH_BASE_URL, DEFAULT_WORKFLOW_ID, DEFAULT_BASE_URL } from "./lib/constants";
+import {
+  DEFAULT_AUTH_BASE_URL,
+  DEFAULT_WORKFLOW_ID,
+  DEFAULT_BASE_URL,
+} from "./lib/constants";
 
 export class AiolaClient {
   private _stt: Stt | null = null;
@@ -11,9 +21,13 @@ export class AiolaClient {
   private readonly _clientConfig: ClientConfig;
 
   constructor(opts: AiolaClientOptions) {
+    // Validate access token
+    if (!Auth.isTokenValid(opts.accessToken)) {
+      throw new Error("Invalid or expired access token. Please generate a new token using AiolaClient.grantToken()");
+    }
+
     // Resolve the configuration once during construction
     this._clientConfig = {
-      apiKey: opts.apiKey,
       accessToken: opts.accessToken,
       baseUrl: opts.baseUrl || DEFAULT_BASE_URL,
       authBaseUrl: opts.authBaseUrl || DEFAULT_AUTH_BASE_URL,
@@ -39,22 +53,48 @@ export class AiolaClient {
 
   /**
    * Generate an access token from an API key without instantiating a client
-   * This is the recommended way to generate tokens in backend services
-   * 
+   * Server handles concurrency limits and will return appropriate errors
+   *
    * @param opts - The configuration options
-   * @returns Promise<string> - The generated access token
-   * 
+   * @returns Promise<GrantTokenResponse> - The generated access token and session ID
+   *
    * @example
    * ```typescript
-   * const accessToken = await AiolaClient.grantToken({ apiKey: 'your-api-key' });
-   * const client = new AiolaClient({ accessToken });
+   * const tokenResponse = await AiolaClient.grantToken({ apiKey: 'your-api-key' });
+   * const client = new AiolaClient({ accessToken: tokenResponse.accessToken });
    * ```
    */
-  static async grantToken(opts: AuthOptions): Promise<string> {
+  static async grantToken(opts: AuthOptions): Promise<GrantTokenResponse> {
     return Auth.grantToken({
       apiKey: opts.apiKey,
-      baseUrl: opts.baseUrl || DEFAULT_AUTH_BASE_URL,
-      workflowId: opts.workflowId || DEFAULT_WORKFLOW_ID
+      baseUrl: opts.baseUrl || DEFAULT_BASE_URL,
+      authBaseUrl: opts.authBaseUrl || DEFAULT_AUTH_BASE_URL,
+      workflowId: opts.workflowId || DEFAULT_WORKFLOW_ID,
+    });
+  }
+
+  /**
+   * Close a session on the server
+   * This terminates the session and frees up concurrency slots
+   *
+   * @param accessToken - The access token for the session
+   * @param opts - The configuration options
+   * @returns Promise<SessionCloseResponse> - The session close response
+   *
+   * @example
+   * ```typescript
+   * await AiolaClient.closeSession(accessToken, { apiKey: 'your-api-key' });
+   * ```
+   */
+  static async closeSession(
+    accessToken: string,
+    opts: AuthOptions,
+  ): Promise<SessionCloseResponse> {
+    return Auth.closeSession(accessToken, {
+      apiKey: opts.apiKey,
+      baseUrl: opts.baseUrl || DEFAULT_BASE_URL,
+      authBaseUrl: opts.authBaseUrl || DEFAULT_AUTH_BASE_URL,
+      workflowId: opts.workflowId || DEFAULT_WORKFLOW_ID,
     });
   }
 }

@@ -3,15 +3,15 @@ import { Auth } from "../../src/clients/auth/Client";
 import { DEFAULT_BASE_URL, DEFAULT_AUTH_BASE_URL, DEFAULT_WORKFLOW_ID } from "../../src/lib/constants";
 
 describe("AiolaClient", () => {
-  const options = { apiKey: "test-api-key", baseUrl: "https://api.aiola.com" } as const;
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9.Ll3PJnkCOWAAQPRVpLaKLBnNcFLJsYJvFKTjdwLKqHQ";
+  const options = { accessToken, baseUrl: "https://api.aiola.com" } as const;
   const client = new AiolaClient(options);
 
   it("should expose resolved options", () => {
     expect(client.options).toEqual({
-      apiKey: "test-api-key",
+      accessToken,
       baseUrl: "https://api.aiola.com",
       authBaseUrl: DEFAULT_AUTH_BASE_URL,
-      accessToken: undefined,
       workflowId: DEFAULT_WORKFLOW_ID
     });
   });
@@ -33,31 +33,26 @@ describe("AiolaClient", () => {
   });
 
   describe("constructor", () => {
-    it("should accept apiKey in options and resolve defaults", () => {
-      const client = new AiolaClient({ apiKey: "test-key" });
-      expect(client.options.apiKey).toBe("test-key");
+    it("should accept accessToken in options and resolve defaults", () => {
+      const client = new AiolaClient({ accessToken });
+      expect(client.options.accessToken).toBe(accessToken);
       expect(client.options.baseUrl).toBe(DEFAULT_BASE_URL);
       expect(client.options.authBaseUrl).toBe(DEFAULT_AUTH_BASE_URL);
       expect(client.options.workflowId).toBe(DEFAULT_WORKFLOW_ID);
     });
 
-    it("should accept accessToken in options", () => {
-      const client = new AiolaClient({ accessToken: "test-token" });
-      expect(client.options.accessToken).toBe("test-token");
-    });
-
     it("should accept baseUrl in options", () => {
-      const client = new AiolaClient({ apiKey: "test-key", baseUrl: "https://custom.api.com" });
+      const client = new AiolaClient({ accessToken, baseUrl: "https://custom.api.com" });
       expect(client.options.baseUrl).toBe("https://custom.api.com");
     });
 
     it("should accept authBaseUrl in options", () => {
-      const client = new AiolaClient({ apiKey: "test-key", authBaseUrl: "https://custom.auth.com" });
+      const client = new AiolaClient({ accessToken, authBaseUrl: "https://custom.auth.com" });
       expect(client.options.authBaseUrl).toBe("https://custom.auth.com");
     });
 
     it("should accept workflowId in options", () => {
-      const client = new AiolaClient({ apiKey: "test-key", workflowId: "custom-workflow-id" });
+      const client = new AiolaClient({ accessToken, workflowId: "custom-workflow-id" });
       expect(client.options.workflowId).toBe("custom-workflow-id");
     });
   });
@@ -66,7 +61,7 @@ describe("AiolaClient", () => {
     let client: AiolaClient;
 
     beforeEach(() => {
-      client = new AiolaClient({ apiKey: "test-key" });
+      client = new AiolaClient({ accessToken });
     });
 
     it("should return stt client", () => {
@@ -86,7 +81,7 @@ describe("AiolaClient", () => {
     it("should return auth client", () => {
       const auth = client.auth;
       expect(auth).toBeDefined();
-      expect(typeof auth.grantToken).toBe("function");
+      expect(typeof Auth.grantToken).toBe("function");
     });
 
     it("should cache client instances", () => {
@@ -110,14 +105,15 @@ describe("AiolaClient", () => {
 
     it("should delegate to Auth.grantToken", async () => {
       // Spy on the Auth static method
-      const authSpy = jest.spyOn(Auth, 'grantToken').mockResolvedValue(mockAccessToken);
+      const authSpy = jest.spyOn(Auth, 'grantToken').mockResolvedValue({accessToken: mockAccessToken, sessionId: "session_789"});
 
       const result = await AiolaClient.grantToken({ apiKey: mockApiKey });
 
-      expect(result).toBe(mockAccessToken);
+      expect(result).toEqual({accessToken: mockAccessToken, sessionId: "session_789"});
       expect(authSpy).toHaveBeenCalledWith({
         apiKey: mockApiKey,
-        baseUrl: DEFAULT_AUTH_BASE_URL,
+        baseUrl: DEFAULT_BASE_URL,
+        authBaseUrl: DEFAULT_AUTH_BASE_URL,
         workflowId: DEFAULT_WORKFLOW_ID
       });
 

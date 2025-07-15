@@ -2,29 +2,38 @@ const fs = require("fs");
 const path = require("path");
 const { AiolaClient } = require("../../../dist/main/index.js");
 
-
-
-const AIOLA_API_KEY = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
-
-const client = new AiolaClient({
-  apiKey: AIOLA_API_KEY,
-});
-
 async function transcribeFile() {
-
-  const filePath = path.resolve(__dirname, "./audio.wav");
-  
-  const file = fs.createReadStream(filePath);
+  const apiKey = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
   
   try {
-    const transcript = await client.stt.transcribeFile({ 
+    // Step 1: Generate access token
+    const { accessToken } = await AiolaClient.grantToken({
+      apiKey: apiKey
+    });
+    
+    console.log("Access token generated successfully");
+    
+    // Step 2: Create client
+    const client = new AiolaClient({
+      accessToken: accessToken
+    });
+
+    // Step 3: Transcribe file
+    const filePath = path.resolve(__dirname,  "path/to/your/audio.wav");
+    const file = fs.createReadStream(filePath);
+    
+    const transcript = await client.stt.transcribeFile({
       file: file,
       language: "en"
     });
 
-    console.log(transcript);
+    console.log("Transcript:", transcript);
+    
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error.message);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
   }
 }
 
