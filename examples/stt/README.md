@@ -12,12 +12,12 @@ import fs from 'fs';
 // Stream audio in real-time for live transcription
 async function liveStreaming() {
   try {
-    // Step 1: Generate access token
+    // Step 1: Generate access token, save it
     const { accessToken } = await AiolaClient.grantToken({
       apiKey: process.env.AIOLA_API_KEY || 'YOUR_API_KEY'
     });
     
-    // Step 2: Create client
+    // Step 2: Create client using the access token
     const client = new AiolaClient({
       accessToken: accessToken
     });
