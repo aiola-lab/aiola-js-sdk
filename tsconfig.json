@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "CommonJS",
-    "outDir": "examples/stt/browser-mic-stream/node_modules/@aiola/sdk/dist/main",
+    "outDir": "dist/main",
     "rootDir": "src",
     "sourceMap": true,
     "strict": true,
