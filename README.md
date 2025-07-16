@@ -25,7 +25,7 @@ The aiOla SDK uses a **two-step authentication process**:
 import { AiolaClient } from '@aiola/sdk';
 
 const { accessToken, sessionId } = await AiolaClient.grantToken({
-  apiKey: 'your-api-key'
+  apiKey: AIOLA_API_KEY
 });
 ```
 
@@ -47,16 +47,14 @@ async function example() {
   try {
     // Step 1: Generate access token
     const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY!
+      apiKey: AIOLA_API_KEY
     });
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Use client for API calls
-    const audioFile = fs.createReadStream('./audio.wav');
+    const audioFile = fs.createReadStream('path/to/your/audio.wav');
     const transcript = await client.stt.transcribeFile({
       file: audioFile,
       language: 'en'
@@ -78,9 +76,7 @@ The SDK automatically handles common scenarios like concurrency limits:
 
 ```typescript
 try {
-  const { accessToken } = await AiolaClient.grantToken({
-    apiKey: 'your-api-key'
-  });
+  const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
 } catch (error) {
   if (error.code === 'MAX_CONCURRENCY_REACHED') {
     console.log('Concurrency limit reached. Please wait for existing sessions to expire.');
@@ -94,7 +90,7 @@ try {
 ```typescript
 // Terminates the session on the server
 await AiolaClient.closeSession(accessToken, {
-  apiKey: 'your-api-key'
+  apiKey: AIOLA_API_KEY
 });
 ```
 
@@ -102,12 +98,12 @@ await AiolaClient.closeSession(accessToken, {
 
 ```typescript
 const { accessToken } = await AiolaClient.grantToken({
-  apiKey: 'your-api-key',
+  apiKey: AIOLA_API_KEY,
   authBaseUrl: 'https://mycompany.auth.aiola.ai',
 });
 
 const client = new AiolaClient({
-  accessToken: accessToken,
+  accessToken,
   baseUrl: 'https://mycompany.api.aiola.ai',
 });
 ```
@@ -121,14 +117,10 @@ import fs from 'fs';
 async function transcribeFile() {
   try {
     // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY!
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Transcribe file
     const file = fs.createReadStream('path/to/your/audio.wav');
@@ -156,14 +148,10 @@ import { AiolaClient } from '@aiola/sdk';
 async function liveStreaming() {
   try {
     // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Start streaming
     const connection = await client.stt.stream({
@@ -180,6 +168,7 @@ async function liveStreaming() {
       const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
       const audioData = await response.arrayBuffer();
 
+      // Send audio data
       connection.send(Buffer.from(audioData));
     });
 
@@ -209,14 +198,10 @@ import { AiolaClient } from '@aiola/sdk';
 async function createFile() {
   try {
     // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY!
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Generate audio
     const audio = await client.tts.synthesize({
@@ -245,14 +230,10 @@ import { AiolaClient } from '@aiola/sdk';
 async function streamTts() {
   try {
     // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY!
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Stream audio
     const stream = await client.tts.stream({

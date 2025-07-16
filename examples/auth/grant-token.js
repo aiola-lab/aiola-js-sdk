@@ -1,18 +1,14 @@
-const { AiolaClient } = require("../dist/main/index.js");
+const { AiolaClient } = require("../../dist/main/index.js");
 
 async function grantToken() {
-  const apiKey = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
-
   try {
-    const { accessToken } = await AiolaClient.grantToken({ apiKey });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Save the token
     console.log(`Token: ${accessToken}`);
 
     // Create a new client using only the access token
-    const clientWithToken = new AiolaClient({
-      accessToken: accessToken,
-    });
+    const clientWithToken = new AiolaClient({ accessToken });
 
     console.log("Client created successfully with access token");
 

@@ -190,7 +190,7 @@ recordingSwitch.addEventListener("click", async () => {
   }
 });
 
-// Enhanced keywords functionality using setKeywords method
+// Keywords functionality using setKeywords method
 keywordsButton.addEventListener("click", () => {
   const keywordsText = keywordsInput.value.trim();
   

@@ -13,14 +13,10 @@ import fs from 'fs';
 async function liveStreaming() {
   try {
     // Step 1: Generate access token, save it
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: process.env.AIOLA_API_KEY || 'YOUR_API_KEY'
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
     // Step 2: Create client using the access token
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Start streaming
     const connection = await client.stt.stream({
@@ -38,6 +34,7 @@ async function liveStreaming() {
       const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
       const audioData = await response.arrayBuffer();
 
+      // Send audio data
       connection.send(Buffer.from(audioData));
     });
 

@@ -6,16 +6,12 @@ async function startStreaming() {
   
   try {
     // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: apiKey,
-    });
+    const { accessToken } = await AiolaClient.grantToken({ apiKey });
     
     console.log("Access token generated successfully");
     
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Start streaming
     const connection = await client.stt.stream({
