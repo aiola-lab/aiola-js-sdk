@@ -1,3 +1,11 @@
+## [2.0.5](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.4...v2.0.5) (2025-07-16)
+
+
+### Bug Fixes
+
+* dist location ([fe00f38](https://github.com/aiola-lab/aiola-js-sdk/commit/fe00f38b51add2cd727c25fbaae87e006703c8e1))
+* set keywords ([6416231](https://github.com/aiola-lab/aiola-js-sdk/commit/6416231fd7f4039eabb85c86d697d3cded5f9557))
+
 ## [2.0.4](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.3...v2.0.4) (2025-07-16)
 
 
