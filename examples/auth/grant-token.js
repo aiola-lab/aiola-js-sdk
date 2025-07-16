@@ -1,4 +1,4 @@
-const { AiolaClient } = require("../dist/main/index.js");
+const { AiolaClient } = require("../../dist/main/index.js");
 
 async function grantToken() {
   try {

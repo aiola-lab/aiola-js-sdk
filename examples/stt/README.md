@@ -34,6 +34,7 @@ async function liveStreaming() {
       const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
       const audioData = await response.arrayBuffer();
 
+      // Send audio data
       connection.send(Buffer.from(audioData));
     });
 
