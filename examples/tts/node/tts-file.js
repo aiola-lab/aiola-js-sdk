@@ -1,4 +1,4 @@
-const { AiolaClient } = require("../../../dist/main/index.js");
+const { AiolaClient } = require("../../../");
 const fs = require("fs");
 
 async function createFile() {
@@ -9,13 +9,9 @@ async function createFile() {
     const { accessToken } = await AiolaClient.grantToken({
       apiKey: apiKey
     });
-    
-    console.log("Access token generated successfully");
-    
+        
     // Step 2: Create client
-    const client = new AiolaClient({
-      accessToken: accessToken
-    });
+    const client = new AiolaClient({ accessToken });
     
     // Step 3: Generate audio
     const audio = await client.tts.synthesize({
