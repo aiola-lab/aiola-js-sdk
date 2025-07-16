@@ -1,3 +1,11 @@
+## [2.0.4](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.3...v2.0.4) (2025-07-16)
+
+
+### Bug Fixes
+
+* docs ([a5856b0](https://github.com/aiola-lab/aiola-js-sdk/commit/a5856b0741957274c1876daac793ae001e2e4b80))
+* stream chunk size ([c883983](https://github.com/aiola-lab/aiola-js-sdk/commit/c88398383b91f38a3edaa9a630268097d70a6f64))
+
 ## [2.0.3](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.2...v2.0.3) (2025-07-15)
 
 
