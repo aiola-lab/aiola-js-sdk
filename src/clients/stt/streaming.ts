@@ -100,7 +100,7 @@ export class StreamingClient {
    * @param keywords - Keywords to set
    */
   setKeywords(keywords: Record<string, string>): void {
-    this.socket.emit("setKeywords", keywords);
+    this.socket.emit("set_keywords", new TextEncoder().encode(JSON.stringify(keywords)));
   }
 
   /**
