@@ -17,6 +17,7 @@ let isRecording = false;
 let isConnected = false;
 let isConnecting = false;
 let currentKeywords = {};
+let micDataSent = false;
 
 // Client instance will be created after token generation
 let client;
@@ -26,6 +27,9 @@ function initializeButtons() {
   updateConnectionStatus(false);
   updateRecordingStatus(false);
   showMessage("Recording stopped");
+  
+  // Set placeholder to guide user about keywords
+  keywordsInput.placeholder = "Enter keywords separated by commas (e.g., hello, world, stop)";
 }
 
 async function initializeClient() {
@@ -91,11 +95,7 @@ async function createStreamingConnection() {
 
   connection.on("error", (error) => {
     console.error("Connection Error:", error);
-    isConnected = false;
-    isConnecting = false;
     showMessage(`Error: ${error.message}`, true);
-    updateConnectionStatus(false);
-    stopRecording();
   });
 }
 
@@ -118,6 +118,13 @@ async function setupMicrophone() {
   audioWorkletNode.port.onmessage = (event) => {
     if (connection && connection.connected && isRecording) {
       connection.send(event.data.audio_data);
+      
+      // Disable keywords button after first mic data is sent
+      if (!micDataSent) {
+        micDataSent = true;
+        keywordsButton.disabled = true;
+        keywordsInput.disabled = true;
+      }
     }
   };
 
@@ -131,6 +138,11 @@ async function startRecording() {
   }
 
   try {
+    // Send keywords before starting microphone to ensure they are set before any audio data
+    if (Object.keys(currentKeywords).length > 0) {
+      connection.setKeywords(currentKeywords);
+    }
+    
     await setupMicrophone();
     isRecording = true;
     updateRecordingStatus(true);
@@ -145,8 +157,13 @@ function stopRecording() {
   if (!isRecording) return;
   cleanupMicrophone();
   isRecording = false;
+  micDataSent = false;
   updateRecordingStatus(false);
   showMessage("Recording stopped");
+  
+  // Re-enable keywords controls when recording stops
+  keywordsButton.disabled = false;
+  keywordsInput.disabled = false;
 }
 
 connectSwitch.addEventListener("click", async () => {
@@ -199,7 +216,7 @@ keywordsButton.addEventListener("click", () => {
     keywordsText.split(',').forEach(keyword => {
       const trimmed = keyword.trim();
       if (trimmed) {
-        keywords[trimmed.toLowerCase()] = trimmed;
+        keywords[trimmed] = trimmed;
       }
     });
     
@@ -210,7 +227,7 @@ keywordsButton.addEventListener("click", () => {
       connection.setKeywords(newKeywords);
       showMessage(`Keywords updated: ${Object.keys(newKeywords).join(', ')}`);
     } else {
-      showMessage(`Keywords set for next connection: ${Object.keys(newKeywords).join(', ')}`);
+      showMessage(`Keywords: ${Object.keys(newKeywords).join(', ')}`);
     }
   } else {
     const defaultKeywords = { };

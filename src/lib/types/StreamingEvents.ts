@@ -87,7 +87,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  setKeywords: (keywords: Record<string, string>) => void;
+  set_keywords: (keywords: Uint8Array) => void;
   binary_data: (data: Buffer) => void;
 }
 

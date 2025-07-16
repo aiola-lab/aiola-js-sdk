@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { AiolaClient } = require("../../../dist/main/index.js");
+const { AiolaClient } = require("../browser-mic-stream/node_modules/@aiola/sdk/dist/main/index.js");
 
 async function transcribeFile() {
   const apiKey = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
