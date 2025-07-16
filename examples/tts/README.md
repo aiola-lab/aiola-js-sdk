@@ -9,9 +9,7 @@ This directory contains examples demonstrating how to use the aiOla SDK for text
 import { AiolaClient } from '@aiola/sdk';
 import fs from 'node:fs';
 
-const client = new AiolaClient({
-  apiKey: 'YOUR_API_KEY',
-});
+const client = new AiolaClient({ apiKey: AIOLA_API_KEY });
 
 async function synthesizeToFile() {
   try {
