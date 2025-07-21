@@ -15,8 +15,7 @@ const fs = require("fs");
 
 async function ttsExample() {
   const apiKey =
-    process.env.AIOLA_API_KEY ||
-    "ak_3e9429d1d66a193c7fdc1485e81f20f9449aa9cf94954c54f07f3c11dac0543d";
+    process.env.AIOLA_API_KEY || "<YOUR-API-KEY>";
 
   try {
     // Step 1: Generate access token
