@@ -10,30 +10,19 @@ Ensure that "type": "commonjs" is set in your package.json before running it.
 // Code example for Text-To-Speech (TTS) using Aiola SDK
 // TypeScript version with proper type annotations for ES modules
 
-import { createWriteStream, type WriteStream } from "fs";
-
-// Dynamic import for Aiola SDK
-const { AiolaClient } = await import("@aiola/sdk");
-
-interface TtsOptions {
-  text: string;
-  voice: string;
-  language: string;
-}
+import { AiolaClient, TtsOptions } from "@aiola/sdk";
+import fs from "fs";
 
 async function ttsExample(): Promise<void> {
-  const apiKey: string =
+  const apiKey =
     process.env.AIOLA_API_KEY ||
-    "<YOUR_API_KEY>";
+    "ak_422b0a96696a51b61e02fa8852fa7f85b8d41c8da63eea8ac08d55aef5272426";
 
   try {
     // Step 1: Generate access token
-    const { accessToken } = await (AiolaClient as any).grantToken({
-      apiKey: apiKey,
-    });
-
+    const { accessToken } = await AiolaClient.grantToken({ apiKey: apiKey });
     // Step 2: Create client
-    const client = new (AiolaClient as any)({ accessToken });
+    const client = new AiolaClient({ accessToken });
 
     // Step 3.1: Make the TTS request
     await synthesizeToFile(client);
@@ -48,30 +37,25 @@ async function ttsExample(): Promise<void> {
   }
 
   async function synthesizeToFile(client: any): Promise<void> {
-    const ttsOptions: TtsOptions = {
+    const audio = await client.tts.synthesize({
       text: "Hello, how can I help you today?",
       voice: "jess",
       language: "en",
-    };
-
-    const audio = await client.tts.synthesize(ttsOptions);
+    });
 
     // Step 4: Save audio stream to file name audio.wav
-    const fileStream: WriteStream = createWriteStream("./audio.wav");
-
+    const fileStream = fs.createWriteStream("./audio.wav");
     audio.pipe(fileStream);
 
     console.log("Audio file created successfully");
   }
 
   async function streamTts(client: any): Promise<void> {
-    const ttsOptions: TtsOptions = {
+    const stream = await client.tts.stream({
       text: "Hello, how can I help you today?",
       voice: "jess",
       language: "en",
-    };
-
-    const stream = await client.tts.stream(ttsOptions);
+    });
 
     const audioChunks: Uint8Array[] = [];
     for await (const chunk of stream) {
@@ -88,5 +72,4 @@ async function ttsExample(): Promise<void> {
 ttsExample().catch((error: Error) => {
   console.error("Unhandled error:", error.message);
 });
-
 ```
