@@ -16,7 +16,7 @@ import fs from "fs";
 async function ttsExample(): Promise<void> {
   const apiKey =
     process.env.AIOLA_API_KEY ||
-    "ak_422b0a96696a51b61e02fa8852fa7f85b8d41c8da63eea8ac08d55aef5272426";
+    "<YOUR_API_KEY>";
 
   try {
     // Step 1: Generate access token
