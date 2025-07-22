@@ -10,7 +10,7 @@ Ensure that "type": "commonjs" is set in your package.json before running it.
 // Code example for Text-To-Speech (TTS) using Aiola SDK
 // TypeScript version with proper type annotations for ES modules
 
-import { AiolaClient, TtsOptions } from "@aiola/sdk";
+import { AiolaClient } from "@aiola/sdk";
 import fs from "fs";
 
 async function ttsExample(): Promise<void> {
@@ -72,4 +72,5 @@ async function ttsExample(): Promise<void> {
 ttsExample().catch((error: Error) => {
   console.error("Unhandled error:", error.message);
 });
+
 ```
