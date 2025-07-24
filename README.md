@@ -57,7 +57,10 @@ async function example() {
     const audioFile = fs.createReadStream('path/to/your/audio.wav');
     const transcript = await client.stt.transcribeFile({
       file: audioFile,
-      language: 'en' //supported lan: en,de,fr,es,pr,zh,ja,it
+      language: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
+      keywords: {
+        "<word_to_catch>": "<word_transcribe>",
+      },
       
     });
     
@@ -128,7 +131,7 @@ async function transcribeFile() {
     
     const transcript = await client.stt.transcribeFile({ 
       file: file,
-      language: "en" //supported lan: en,de,fr,es,pr,zh,ja,it
+      language: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
       keywords: {
         "<word_to_catch>": "<word_transcribe>",
       },
@@ -188,6 +191,10 @@ async function liveStreaming() {
     });
 
     connection.connect();
+
+    // Step 4: Send audio bytes
+    connection.send('<AUDIO_BYTES>');
+
   } catch (error) {
     console.error('Error setting up streaming:', error);
   }
