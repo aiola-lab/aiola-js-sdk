@@ -1,3 +1,10 @@
+## [2.0.6](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.5...v2.0.6) (2025-07-24)
+
+
+### Bug Fixes
+
+* transcribeFile headers. Readme update with stt keywords param and supported langs ([#33](https://github.com/aiola-lab/aiola-js-sdk/issues/33)) ([ae4334a](https://github.com/aiola-lab/aiola-js-sdk/commit/ae4334ad0c7748316713e8c4e96c543cdb4af83d))
+
 ## [2.0.5](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.4...v2.0.5) (2025-07-16)
 
 
