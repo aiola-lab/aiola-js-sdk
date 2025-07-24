@@ -50,6 +50,10 @@ async function liveStreaming() {
     });
 
     connection.connect();
+
+    // Step 4: Send audio bytes
+    connection.send('<AUDIO_BYTES>');
+    
   } catch (error) {
     console.error('Error setting up streaming:', error);
   }
