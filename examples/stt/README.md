@@ -20,7 +20,10 @@ async function liveStreaming() {
     
     // Step 3: Start streaming
     const connection = await client.stt.stream({
-      langCode: 'en',
+      langCode: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
+      keywords: {
+        "<word_to_catch>": "<word_transcribe>",
+      },
     });
 
     connection.on('transcript', (data) => {
