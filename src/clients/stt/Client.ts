@@ -16,13 +16,13 @@ export class Stt extends AbstractClient {
   private readonly namespace = "/events";
 
   public async stream(
-    requestOptions: SttStreamRequest,
+    requestOptions: SttStreamRequest
   ): Promise<StreamingClient> {
     const url: string = this.getWebSocketUrl();
     const accessToken = await this.auth.getAccessToken(this.options);
     const { query, headers } = this.buildQueryAndHeaders(
       requestOptions,
-      accessToken,
+      accessToken
     );
 
     const socket: StreamingClient = new StreamingClient({
@@ -42,7 +42,7 @@ export class Stt extends AbstractClient {
   }
 
   public async transcribeFile(
-    requestOptions: TranscribeFileRequest,
+    requestOptions: TranscribeFileRequest
   ): Promise<TranscribeFileResponse> {
     const formData = new FormData();
     formData.append("file", requestOptions.file);
@@ -58,7 +58,6 @@ export class Stt extends AbstractClient {
     const response = await this.fetch("/api/speech-to-text/file", {
       method: "POST",
       body: formData as unknown as BodyInit,
-      headers: formData.getHeaders(),
     });
 
     return response.json();
@@ -70,7 +69,7 @@ export class Stt extends AbstractClient {
 
   private buildQueryAndHeaders(
     requestOptions: SttStreamRequest,
-    accessToken: string,
+    accessToken: string
   ): QueryAndHeaders {
     const executionId = requestOptions.executionId || nanoid();
 
@@ -85,7 +84,7 @@ export class Stt extends AbstractClient {
     };
 
     const headers = {
-      "Authorization": `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     };
 
     return { query, headers };

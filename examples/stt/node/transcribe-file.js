@@ -20,7 +20,10 @@ async function transcribeFile() {
     
     const transcript = await client.stt.transcribeFile({
       file: file,
-      language: "en"
+      language: "en",
+      keywords: {
+        "<word_to_catch>": "<word_transcribe>",
+      },
     });
 
     console.log("Transcript:", transcript);
