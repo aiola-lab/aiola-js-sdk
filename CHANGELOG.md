@@ -1,3 +1,10 @@
+## [2.0.7](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.6...v2.0.7) (2025-07-27)
+
+
+### Bug Fixes
+
+* update transcribeFile function to include file existence check and improve error handling ([#34](https://github.com/aiola-lab/aiola-js-sdk/issues/34)) ([9c66515](https://github.com/aiola-lab/aiola-js-sdk/commit/9c665151abb1802392842f54c4d6ab9447e80695))
+
 ## [2.0.6](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.5...v2.0.6) (2025-07-24)
 
 
