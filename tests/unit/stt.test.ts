@@ -318,6 +318,7 @@ describe("Stt Client – transcribeFile method", () => {
       expect(mockFetch).toHaveBeenCalledWith("/api/speech-to-text/file", {
         method: "POST",
         body: mockFormData,
+        headers: mockFormData.getHeaders(),
       });
       expect(result).toEqual(mockTranscriptionResponse);
     });

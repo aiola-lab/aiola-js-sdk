@@ -58,6 +58,7 @@ export class Stt extends AbstractClient {
     const response = await this.fetch("/api/speech-to-text/file", {
       method: "POST",
       body: formData as unknown as BodyInit,
+      headers: formData.getHeaders(),
     });
 
     return response.json();
