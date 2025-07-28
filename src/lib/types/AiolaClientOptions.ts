@@ -3,6 +3,7 @@ export interface AiolaClientOptions {
   baseUrl?: string;
   authBaseUrl?: string;
   workflowId?: string;
+  timeout?: number;
 }
 
 export interface ClientConfig {
@@ -10,4 +11,5 @@ export interface ClientConfig {
   baseUrl: string;
   authBaseUrl: string;
   workflowId: string;
+  timeout: number;
 }

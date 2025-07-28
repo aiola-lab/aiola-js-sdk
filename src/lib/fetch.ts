@@ -16,50 +16,60 @@ export function createAuthenticatedFetch(
   auth: Auth,
 ): (url: string, init?: RequestInit) => Promise<Response> {
   return async (url: string, init: RequestInit = {}) => {
-    // Resolve the full URL
-    const fullUrl = url.startsWith("http") ? url : `${options.baseUrl}${url}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout);
 
-    // Get access token from auth module
-    const accessToken = await auth.getAccessToken(options);
+    try {
+      // Resolve the full URL
+      const fullUrl = url.startsWith("http")
+        ? url
+        : `${options.baseUrl}${url}`;
 
-    // Prepare headers
-    const headers = new Headers(init.headers);
+      // Get access token from auth module
+      const accessToken = await auth.getAccessToken(options);
 
-    // Add default headers
-    Object.entries(DEFAULT_HEADERS).forEach(([key, value]) => {
-      if (!headers.has(key)) {
-        headers.set(key, value);
+      // Prepare headers
+      const headers = new Headers(init.headers);
+
+      // Add default headers
+      Object.entries(DEFAULT_HEADERS).forEach(([key, value]) => {
+        if (!headers.has(key)) {
+          headers.set(key, value);
+        }
+      });
+
+      // Add Authorization header
+      headers.set("Authorization", `Bearer ${accessToken}`);
+
+      // Handle Content-Type for different body types
+      if (init.body && !headers.has("Content-Type")) {
+        // Don't set Content-Type for FormData - let the browser/Node.js set it with boundary
+        const isFormData =
+          init.body instanceof FormData ||
+          (typeof init.body === "object" &&
+            init.body.constructor?.name === "FormData");
+
+        if (!isFormData) {
+          headers.set("Content-Type", "application/json");
+        }
       }
-    });
 
-    // Add Authorization header
-    headers.set("Authorization", `Bearer ${accessToken}`);
+      // Make the request
+      const response = await fetch(fullUrl, {
+        ...init,
+        headers,
+        signal: controller.signal,
+      });
 
-    // Handle Content-Type for different body types
-    if (init.body && !headers.has("Content-Type")) {
-      // Don't set Content-Type for FormData - let the browser/Node.js set it with boundary
-      const isFormData =
-        init.body instanceof FormData ||
-        (typeof init.body === "object" &&
-          init.body.constructor?.name === "FormData");
-
-      if (!isFormData) {
-        headers.set("Content-Type", "application/json");
+      // Handle errors
+      if (!response.ok) {
+        throw await AiolaError.fromResponse(response);
       }
+
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    // Make the request
-    const response = await fetch(fullUrl, {
-      ...init,
-      headers,
-    });
-
-    // Handle errors
-    if (!response.ok) {
-      throw await AiolaError.fromResponse(response);
-    }
-
-    return response;
   };
 }
 

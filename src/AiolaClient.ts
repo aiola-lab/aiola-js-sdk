@@ -12,6 +12,7 @@ import {
   DEFAULT_AUTH_BASE_URL,
   DEFAULT_WORKFLOW_ID,
   DEFAULT_BASE_URL,
+  DEFAULT_TIMEOUT,
 } from "./lib/constants";
 
 export class AiolaClient {
@@ -32,6 +33,7 @@ export class AiolaClient {
       baseUrl: opts.baseUrl || DEFAULT_BASE_URL,
       authBaseUrl: opts.authBaseUrl || DEFAULT_AUTH_BASE_URL,
       workflowId: opts.workflowId || DEFAULT_WORKFLOW_ID,
+      timeout: opts.timeout || DEFAULT_TIMEOUT,
     };
   }
 

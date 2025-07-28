@@ -8,3 +8,5 @@ export const DEFAULT_HEADERS = {
 };
 
 export const DEFAULT_WORKFLOW_ID = "2c78fcf1-9265-408f-b8c3-d9d7e7ebc1bc";
+
+export const DEFAULT_TIMEOUT = 150000;
