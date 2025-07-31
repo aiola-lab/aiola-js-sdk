@@ -29,7 +29,7 @@ function initializeButtons() {
   showMessage("Recording stopped");
   
   // Set placeholder to guide user about keywords
-  keywordsInput.placeholder = "Enter keywords separated by commas (e.g., hello, world, stop)";
+  keywordsInput.placeholder = "Enter keywords (comma separated)";
 }
 
 async function initializeClient() {
@@ -175,7 +175,7 @@ connectSwitch.addEventListener("click", async () => {
     if (connection) {
       connection.disconnect();
     }
-    showMessage("Disconnecting...");
+    showMessage("Disconnected");
   } else {
     // Connect
     isConnecting = true;
