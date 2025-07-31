@@ -7,7 +7,8 @@ This directory contains examples demonstrating how to use the aiOla SDK for spee
 <!--snippet;stt;quickstart-->
 ```typescript
 import { AiolaClient } from '@aiola/sdk';
-import fs from 'fs';
+
+const AIOLA_API_KEY = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
 
 // Stream audio in real-time for live transcription
 async function liveStreaming() {
@@ -18,11 +19,11 @@ async function liveStreaming() {
     // Step 2: Create client using the access token
     const client = new AiolaClient({ accessToken });
     
-    // Step 3: Start streaming
+    // Step 3: Create stream connection
     const connection = await client.stt.stream({
       langCode: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
       keywords: {
-        "<word_to_catch>": "<word_transcribe>",
+        "venus": "venuss", // "<word_to_catch>": "<word_transcribe>",
       },
     });
 
@@ -33,7 +34,7 @@ async function liveStreaming() {
     connection.on('connect', async () => {
       console.log('Connected to streaming service');
 
-      // Get an audio file
+      // Get an audio file (or use a microphone stream)
       const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
       const audioData = await response.arrayBuffer();
 
@@ -50,9 +51,6 @@ async function liveStreaming() {
     });
 
     connection.connect();
-
-    // Step 4: Send audio bytes
-    connection.send('<AUDIO_BYTES>');
     
   } catch (error) {
     console.error('Error setting up streaming:', error);

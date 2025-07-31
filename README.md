@@ -37,43 +37,6 @@ const client = new AiolaClient({
 });
 ```
 
-#### Complete Example
-
-```typescript
-import { AiolaClient } from '@aiola/sdk';
-import fs from 'fs';
-
-async function example() {
-  try {
-    // Step 1: Generate access token
-    const { accessToken } = await AiolaClient.grantToken({
-      apiKey: AIOLA_API_KEY
-    });
-    
-    // Step 2: Create client
-    const client = new AiolaClient({ accessToken });
-    
-    // Step 3: Use client for API calls
-    const audioFile = fs.createReadStream('path/to/your/audio.wav');
-    const transcript = await client.stt.transcribeFile({
-      file: audioFile,
-      language: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
-      keywords: {
-        "<word_to_catch>": "<word_transcribe>",
-      },
-      
-    });
-    
-    console.log('Transcript:', transcript);
-    
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-example();
-```
-
 #### Error Handling
 
 The SDK automatically handles common scenarios like concurrency limits:
@@ -151,20 +114,22 @@ transcribeFile();
 ```typescript
 import { AiolaClient } from '@aiola/sdk';
 
+const AIOLA_API_KEY = process.env.AIOLA_API_KEY || 'YOUR_API_KEY';
+
 // Stream audio in real-time for live transcription
 async function liveStreaming() {
   try {
-    // Step 1: Generate access token
+    // Step 1: Generate access token, save it
     const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
-    // Step 2: Create client
+    // Step 2: Create client using the access token
     const client = new AiolaClient({ accessToken });
     
-    // Step 3: Start streaming
+    // Step 3: Create stream connection
     const connection = await client.stt.stream({
       langCode: 'en', //supported lan: en,de,fr,es,pr,zh,ja,it
       keywords: {
-        "<word_to_catch>": "<word_transcribe>",
+        "venus": "venuss", // "<word_to_catch>": "<word_transcribe>",
       },
     });
 
@@ -174,7 +139,8 @@ async function liveStreaming() {
 
     connection.on('connect', async () => {
       console.log('Connected to streaming service');
-      
+
+      // Get an audio file (or use a microphone stream)
       const response = await fetch("https://github.com/aiola-lab/aiola-js-sdk/raw/refs/heads/main/examples/stt/assets/sample-en.wav");
       const audioData = await response.arrayBuffer();
 
@@ -191,10 +157,7 @@ async function liveStreaming() {
     });
 
     connection.connect();
-
-    // Step 4: Send audio bytes
-    connection.send('<AUDIO_BYTES>');
-
+    
   } catch (error) {
     console.error('Error setting up streaming:', error);
   }

@@ -23,17 +23,17 @@ async function transcribeFile() {
       "../assets/sample-en.wav" // TODO: change to your own path  
     );
 
-    const fileBufferAsync = await readFile(filePath);
+    const file = await readFile(filePath);
     
-    const transcript3 = await client.stt.transcribeFile({
-      file: fileBufferAsync,
+    const transcript = await client.stt.transcribeFile({
+      file: file,
       language: "en",
       keywords: {
         venus: "venuss", // "<word_to_catch>": "<word_transcribe>"
       },
     });
 
-    console.log("Transcript (using buffer async):", transcript3);
+    console.log("Transcript:", transcript);
   } catch (error) {
     console.error("Error:", error.message);
     if (error.code) {
