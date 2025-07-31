@@ -1,3 +1,10 @@
+## [2.0.8](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.7...v2.0.8) (2025-07-31)
+
+
+### Bug Fixes
+
+* browser example ([#36](https://github.com/aiola-lab/aiola-js-sdk/issues/36)) ([8823a01](https://github.com/aiola-lab/aiola-js-sdk/commit/8823a0156b32a8948a2b4dd751a7dda34789445b))
+
 ## [2.0.7](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.6...v2.0.7) (2025-07-27)
 
 
