@@ -63,13 +63,9 @@ form.addEventListener('submit', async (e) => {
       await initializeClient(apiKey);
     }
     
-    // Convert File to Buffer for the SDK
-    const fileBuffer = await audioFile.arrayBuffer();
-    const uint8Array = new Uint8Array(fileBuffer);
-    
-    // Transcribe file using the SDK
+    // Use the File object directly - the SDK will handle it properly
     const transcript = await client.stt.transcribeFile({
-      file: uint8Array,
+      file: audioFile,
       language: language,
       keywords: Object.keys(keywords).length > 0 ? keywords : undefined,
     });
