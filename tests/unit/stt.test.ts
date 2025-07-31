@@ -395,7 +395,10 @@ describe("Stt Client – transcribeFile method", () => {
 
       const result = await stt.transcribeFile({ file: mockFile });
 
-      expect(mockFormData.append).toHaveBeenCalledWith("file", mockFile);
+      expect(mockFormData.append).toHaveBeenCalledWith("file", mockFile, {
+        filename: "audio",
+        contentType: "application/octet-stream"
+      });
       expect(result).toEqual(mockTranscriptionResponse);
     });
 
