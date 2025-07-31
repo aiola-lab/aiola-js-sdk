@@ -1,8 +1,8 @@
-const fs = require("fs");
+const { readFile } = require("fs/promises");
 const path = require("path");
 const {
   AiolaClient,
-} = require("../browser-mic-stream/node_modules/@aiola/sdk/dist/main/index.js");
+} = require("../../../dist/main/index.js");
 
 async function transcribeFile() {
   const apiKey =
@@ -23,13 +23,8 @@ async function transcribeFile() {
       "../assets/sample-en.wav" // TODO: change to your own path  
     );
 
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`File not found at path: ${filePath}`);
-    }
-
-    const file = fs.createReadStream(filePath);
+    const file = await readFile(filePath);
     
-
     const transcript = await client.stt.transcribeFile({
       file: file,
       language: "en",

@@ -10,6 +10,7 @@ import { AiolaError } from "../../lib/errors";
 import { StreamingClient } from "./streaming";
 import FormData from "form-data";
 import { DEFAULT_WORKFLOW_ID } from "../../lib/constants";
+import { prepareFileForFormData } from "../../lib/files";
 
 export class Stt extends AbstractClient {
   private readonly path = "/api/voice-streaming/socket.io";
@@ -45,7 +46,14 @@ export class Stt extends AbstractClient {
     requestOptions: TranscribeFileRequest
   ): Promise<TranscribeFileResponse> {
     const formData = new FormData();
-    formData.append("file", requestOptions.file);
+    
+    const { file, options } = prepareFileForFormData(requestOptions.file);
+    
+    if (options) {
+      formData.append("file", file, options);
+    } else {
+      formData.append("file", file);
+    }
 
     if (requestOptions.language) {
       formData.append("language", requestOptions.language);
@@ -90,4 +98,5 @@ export class Stt extends AbstractClient {
 
     return { query, headers };
   }
+
 }
