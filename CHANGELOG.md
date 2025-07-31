@@ -1,3 +1,10 @@
+## [2.0.9](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.8...v2.0.9) (2025-07-31)
+
+
+### Bug Fixes
+
+* check buffer type ([8afea50](https://github.com/aiola-lab/aiola-js-sdk/commit/8afea509edead9cc985d19c4a2d852482e1450cc))
+
 ## [2.0.8](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.7...v2.0.8) (2025-07-31)
 
 
