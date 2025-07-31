@@ -2,7 +2,7 @@ import { FileSource } from "./types/TranscribeFileRequest";
 
 export function prepareFileForFormData(file: FileSource): { file: FileSource; options?: { filename: string; contentType: string } } {
   // For Buffer objects, detect file type and provide metadata
-  if (Buffer.isBuffer(file)) {
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(file)) {
     const { filename, contentType } = detectAudioFileType(file);
     return {
       file,
