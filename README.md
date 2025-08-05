@@ -79,7 +79,7 @@ const client = new AiolaClient({
 
 ```typescript
 import { AiolaClient } from '@aiola/sdk';
-import fs from 'fs';
+import fs from 'fs/promises';
 
 async function transcribeFile() {
   try {
@@ -90,7 +90,7 @@ async function transcribeFile() {
     const client = new AiolaClient({ accessToken });
     
     // Step 3: Transcribe file
-    const file = fs.createReadStream('path/to/your/audio.wav');
+    const file = await fs.readFile('path/to/your/audio.wav');
     
     const transcript = await client.stt.transcribeFile({ 
       file: file,
@@ -187,8 +187,10 @@ async function createFile() {
       language: 'en',
     });
 
-    const fileStream = fs.createWriteStream('./audio.wav');
-    audio.pipe(fileStream);
+    const fileStream = fs.createWriteStream('./output.wav');
+    for await (const chunk of audio) {
+        fileStream.write(chunk);
+    }
     
     console.log('Audio file created successfully');
   } catch (error) {
