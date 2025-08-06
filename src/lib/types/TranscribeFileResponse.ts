@@ -1,21 +1,21 @@
 export interface Segment {
   start: number;
   end: number;
-  text: string;
 }
 
 export interface TranscriptionMetadata {
-  duration: number;
+  file_duration: number;
   language: string;
   sample_rate: number;
   num_channels: number;
   timestamp_utc: string;
-  model_version: string;
+  segments_count: number;
+  total_speech_duration: number;
 }
 
 export interface TranscribeFileResponse {
   transcript: string;
-  itn_transcript: string;
+  raw_transcript: string;
   segments: Segment[];
   metadata: TranscriptionMetadata;
 }

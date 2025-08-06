@@ -250,21 +250,21 @@ describe("Stt Client – transcribeFile method", () => {
 
   const mockTranscriptionResponse: TranscribeFileResponse = {
     transcript: "Hello world",
-    itn_transcript: "hello world",
+    raw_transcript: "hello world",
     segments: [
       {
         start: 0.0,
         end: 1.5,
-        text: "Hello world",
       },
     ],
     metadata: {
-      duration: 1.5,
+      file_duration: 1.5,
       language: "en",
       sample_rate: 16000,
       num_channels: 1,
       timestamp_utc: "2023-12-01T12:00:00Z",
-      model_version: "v1.0",
+      segments_count: 1,
+      total_speech_duration: 1.5,
     },
   };
 
