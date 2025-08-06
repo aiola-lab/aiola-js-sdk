@@ -2,6 +2,10 @@
 
 The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, work seamlessly in both Node.js and browser environments.
 
+## Documentation
+
+Learn more about the aiOla API and how to use the SDK in our [documentation](https://docs.aiola.ai).
+
 ## Installation
 
 ```bash
