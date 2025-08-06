@@ -1,3 +1,10 @@
+## [2.0.10](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.9...v2.0.10) (2025-08-06)
+
+
+### Bug Fixes
+
+* TranscribeFileResponse structure ([b2ad32b](https://github.com/aiola-lab/aiola-js-sdk/commit/b2ad32bbf905c23721aefa5e81e34a77af9dc1aa))
+
 ## [2.0.9](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.8...v2.0.9) (2025-07-31)
 
 
