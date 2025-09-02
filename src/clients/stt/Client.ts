@@ -82,16 +82,25 @@ export class Stt extends AbstractClient {
   ): QueryAndHeaders {
     const executionId = requestOptions.executionId || nanoid();
 
-    const query = {
+    const query: Record<string, string> = {
       execution_id: executionId,
       flow_id: requestOptions.workflowId || DEFAULT_WORKFLOW_ID,
-      lang_code: requestOptions.langCode || "en",
       time_zone: requestOptions.timeZone || "UTC",
-      tasks_config: JSON.stringify(requestOptions.tasksConfig || {}),
-      keywords: JSON.stringify(requestOptions.keywords || {}),
       "x-aiola-api-token": accessToken,
     };
 
+    if (requestOptions.langCode) {
+      query.lang_code = requestOptions.langCode;
+    }
+
+    if (requestOptions.tasksConfig) {
+      query.tasks_config = JSON.stringify(requestOptions.tasksConfig);
+    }
+
+    if (requestOptions.keywords) {
+      query.keywords = JSON.stringify(requestOptions.keywords);
+    }
+    
     const headers = {
       Authorization: `Bearer ${accessToken}`,
     };
