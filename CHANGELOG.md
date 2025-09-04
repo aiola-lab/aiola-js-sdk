@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.10...v2.1.0) (2025-09-04)
+
+
+### Features
+
+* add vadConfig support to STT client and related types VA-136 ([#43](https://github.com/aiola-lab/aiola-js-sdk/issues/43)) ([f687dcd](https://github.com/aiola-lab/aiola-js-sdk/commit/f687dcd5eed99f706efbe31525393b4ecdb1d540))
+
 ## [2.0.10](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.9...v2.0.10) (2025-08-06)
 
 
