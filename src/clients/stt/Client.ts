@@ -63,6 +63,10 @@ export class Stt extends AbstractClient {
       formData.append("keywords", JSON.stringify(requestOptions.keywords));
     }
 
+    if (requestOptions.vadConfig) {
+      formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
+    }
+
     const response = await this.fetch("/api/speech-to-text/file", {
       method: "POST",
       body: formData as unknown as BodyInit,
@@ -99,6 +103,10 @@ export class Stt extends AbstractClient {
 
     if (requestOptions.keywords) {
       query.keywords = JSON.stringify(requestOptions.keywords);
+    }
+
+    if (requestOptions.vadConfig) {
+      query.vad_config = JSON.stringify(requestOptions.vadConfig);
     }
     
     const headers = {

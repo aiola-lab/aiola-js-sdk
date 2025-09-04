@@ -1,3 +1,5 @@
+import { VadConfig } from "./VadConfig";
+
 export interface TranslationPayload {
   src_lang_code: string;
   dst_lang_code: string;
@@ -48,4 +50,5 @@ export interface SttStreamRequest {
   timeZone?: string;
   tasksConfig?: TasksConfig;
   keywords?: Record<string, string>;
+  vadConfig?: VadConfig;
 }
