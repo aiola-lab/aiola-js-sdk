@@ -7,3 +7,4 @@ export * from "./SttTypes";
 export * from "./TranscribeFileRequest";
 export * from "./TranscribeFileResponse";
 export * from "./TtsRequest";
+export * from "./VadConfig";
