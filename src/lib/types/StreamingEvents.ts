@@ -22,6 +22,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
+  set_focus: (focus_path: boolean) => void;
   set_keywords: (keywords: Uint8Array) => void;
   binary_data: (data: Buffer) => void;
 }

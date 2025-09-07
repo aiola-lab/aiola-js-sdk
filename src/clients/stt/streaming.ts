@@ -102,6 +102,9 @@ export class StreamingClient {
   setKeywords(keywords: Record<string, string>): void {
     this.socket.emit("set_keywords", new TextEncoder().encode(JSON.stringify(keywords)));
   }
+  setFocus(focus_path: string): void {
+    this.socket.emit('set_focus', focus_path);
+  }
 
   /**
    * Connect to the streaming service
