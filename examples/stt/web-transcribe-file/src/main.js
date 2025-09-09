@@ -1,5 +1,4 @@
-// Change from ESM import to CommonJS require
-const { AiolaClient } = require('@aiola/sdk');
+import { AiolaClient } from "@aiola/sdk";
 
 // DOM Elements
 const form = document.getElementById('transcriptionForm');

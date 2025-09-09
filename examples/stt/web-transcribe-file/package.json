@@ -2,7 +2,7 @@
   "name": "web-transcribe-file",
   "private": true,
   "version": "0.0.0",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
@@ -12,6 +12,6 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
-    "@aiola/sdk": "file:../../.."
+    "@aiola/sdk": "^2.0.9"
   }
 }
