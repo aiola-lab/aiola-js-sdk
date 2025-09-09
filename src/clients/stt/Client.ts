@@ -11,6 +11,7 @@ import { StreamingClient } from "./streaming";
 import FormData from "form-data";
 import { DEFAULT_WORKFLOW_ID } from "../../lib/constants";
 import { prepareFileForFormData } from "../../lib/files";
+import { RUNTIME } from "../../lib/runtime";
 
 export class Stt extends AbstractClient {
   private readonly path = "/api/voice-streaming/socket.io";
@@ -70,7 +71,7 @@ export class Stt extends AbstractClient {
     const response = await this.fetch("/api/speech-to-text/file", {
       method: "POST",
       body: formData as unknown as BodyInit,
-      headers: formData.getHeaders(),
+      headers: RUNTIME.type === "node" ? formData.getHeaders() : undefined,
     });
 
     return response.json();

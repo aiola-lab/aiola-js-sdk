@@ -2,7 +2,7 @@
   "name": "web-transcribe-file",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",

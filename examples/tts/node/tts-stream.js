@@ -1,4 +1,4 @@
-const { AiolaClient } = require("../../../dist/main/index.js");
+const { AiolaClient } = require("../../../dist/index.js");
 
 async function streamTts() {
   const apiKey = process.env.AIOLA_API_KEY || "YOUR_API_KEY";
