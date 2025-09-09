@@ -1,9 +1,0 @@
-{
-    "extends": "./tsconfig",
-    "compilerOptions": {
-      "module": "ES2020",
-      "moduleResolution": "bundler",
-      "outDir": "dist/module"
-    }
-  }
-  

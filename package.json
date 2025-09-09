@@ -1,6 +1,6 @@
 {
   "name": "@aiola/sdk",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "aiOla javascript sdk",
   "homepage": "https://aiola.ai",
   "keywords": [
@@ -10,13 +10,11 @@
     "speech-to-text",
     "text-to-speech"
   ],
-  "main": "dist/main/index.js",
-  "types": "dist/main/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build:main": "tsc -p tsconfig.json",
-    "build:module": "tsc -p tsconfig.module.json",
-    "build": "npm run build:main && npm run build:module",
+    "build": "tsup",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
@@ -39,6 +37,7 @@
     "semantic-release": "^22.0.7",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.0"
   },
@@ -48,12 +47,11 @@
     "nanoid": "^5.1.5",
     "socket.io-client": "^4.8.1"
   },
-  "module": "dist/module/index.js",
   "exports": {
     ".": {
-      "types": "./dist/main/index.d.ts",
-      "require": "./dist/main/index.js",
-      "import": "./dist/module/index.js"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -63,5 +61,8 @@
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
