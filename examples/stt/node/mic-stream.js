@@ -1,4 +1,4 @@
-const { AiolaClient } = require("../../../dist/main/index.js");
+const { AiolaClient } = require("../../../dist/index.js");
 const { SoxRecording } = require("./sox.js"); // brew install sox
 
 async function startStreaming() {

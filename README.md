@@ -2,6 +2,10 @@
 
 The official JavaScript/TypeScript SDK for the [aiOla](https://aiola.com) API, work seamlessly in both Node.js and browser environments.
 
+## Requirements
+
+- **Node.js**: 18.0.0 or higher
+
 ## Documentation
 
 Learn more about the aiOla API and how to use the SDK in our [documentation](https://docs.aiola.ai).

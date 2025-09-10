@@ -2,7 +2,7 @@ const { readFile } = require("fs/promises");
 const path = require("path");
 const {
   AiolaClient,
-} = require("../../../dist/main/index.js");
+} = require("../../../dist/index.js");
 
 async function transcribeFile() {
   const apiKey =
