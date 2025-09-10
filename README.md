@@ -216,13 +216,10 @@ import { AiolaClient } from '@aiola/sdk';
 
 async function streamTts() {
   try {
-    // Step 1: Generate access token
     const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
-    // Step 2: Create client
     const client = new AiolaClient({ accessToken });
     
-    // Step 3: Stream audio
     const stream = await client.tts.stream({
       text: 'Hello, how can I help you today?',
       voice: 'jess',
