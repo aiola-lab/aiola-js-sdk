@@ -10,35 +10,27 @@ jest.mock("../../src/lib/runtime", () => ({
   }
 }));
 
-jest.mock("cross-fetch", () => {
-  const actual = jest.requireActual("cross-fetch");
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
+global.Headers = jest.fn().mockImplementation((init) => {
+  const headers = new Map();
+  if (init) {
+    Object.entries(init).forEach(([key, value]) => {
+      headers.set(key.toLowerCase(), value);
+    });
+  }
   return {
-    ...actual,
-    fetch: jest.fn(),
-    Headers: jest.fn().mockImplementation((init) => {
-      const headers = new Map();
-      if (init) {
-        Object.entries(init).forEach(([key, value]) => {
-          headers.set(key.toLowerCase(), value);
-        });
-      }
-      return {
-        set: (key: string, value: string) => headers.set(key.toLowerCase(), value),
-        get: (key: string) => headers.get(key.toLowerCase()),
-        has: (key: string) => headers.has(key.toLowerCase()),
-        entries: () => headers.entries(),
-        [Symbol.iterator]: () => headers.entries()
-      };
-    })
+    set: (key: string, value: string) => headers.set(key.toLowerCase(), value),
+    get: (key: string) => headers.get(key.toLowerCase()),
+    has: (key: string) => headers.has(key.toLowerCase()),
+    entries: () => headers.entries(),
+    [Symbol.iterator]: () => headers.entries()
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const crossFetch = require("cross-fetch");
-const mockCrossFetch: jest.Mock = crossFetch.fetch;
-
-// Return a resolved Promise by default so that downstream `.catch()` chaining does not blow up
-mockCrossFetch.mockImplementation(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+// Return a resolved Promise by default
+mockFetch.mockImplementation(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
 
 describe("createAuthenticatedFetch", () => {
   const opts: ClientConfig = {
@@ -51,7 +43,7 @@ describe("createAuthenticatedFetch", () => {
   let mockAuth: jest.Mocked<Auth>;
 
   beforeEach(() => {
-    mockCrossFetch.mockClear();
+    mockFetch.mockClear();
     
     // Mock the Auth instance
     mockAuth = {
@@ -66,8 +58,8 @@ describe("createAuthenticatedFetch", () => {
     const fetch = createAuthenticatedFetch(opts, mockAuth);
     await fetch("/v1/hello");
 
-    expect(mockCrossFetch).toHaveBeenCalledTimes(1);
-    const [url] = mockCrossFetch.mock.calls[0];
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url] = mockFetch.mock.calls[0];
     expect(url).toBe("https://api.aiola.com/v1/hello");
   });
 
@@ -75,7 +67,7 @@ describe("createAuthenticatedFetch", () => {
     const fetch = createAuthenticatedFetch(opts, mockAuth);
     await fetch("https://example.com/other");
 
-    const [url] = mockCrossFetch.mock.calls[0];
+    const [url] = mockFetch.mock.calls[0];
     expect(url).toBe("https://example.com/other");
   });
 
@@ -84,7 +76,7 @@ describe("createAuthenticatedFetch", () => {
     await fetch("/protected");
 
     expect(mockAuth.getAccessToken).toHaveBeenCalledWith(opts);
-    const [, init] = mockCrossFetch.mock.calls[0];
+    const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.get("Authorization")).toBe("Bearer mock-access-token");
   });
 
@@ -99,7 +91,7 @@ describe("createAuthenticatedFetch", () => {
     const fetch = createAuthenticatedFetch(opts, mockAuth);
     await fetch("/api/upload", { method: "POST", body: new FormData() });
 
-    const [, init] = mockCrossFetch.mock.calls[0];
+    const [, init] = mockFetch.mock.calls[0];
     // Should not add application/json Content-Type for FormData
     expect(init.headers.get("Content-Type")).not.toBe("application/json");
   });
@@ -108,7 +100,7 @@ describe("createAuthenticatedFetch", () => {
     const fetch = createAuthenticatedFetch(opts, mockAuth);
     await fetch("/test");
 
-    const [, init] = mockCrossFetch.mock.calls[0];
+    const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.get("User-Agent")).toBe("@aiola/aiola-js/node/1.0.0");
   });
 
@@ -121,7 +113,7 @@ describe("createAuthenticatedFetch", () => {
       } 
     });
 
-    const [, init] = mockCrossFetch.mock.calls[0];
+    const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.get("Custom-Header")).toBe("custom-value");
     expect(init.headers.get("Content-Type")).toBe("application/xml");
     expect(init.headers.get("Authorization")).toBe("Bearer mock-access-token");
@@ -134,7 +126,7 @@ describe("createAuthenticatedFetch", () => {
       body: JSON.stringify({ test: "data" })
     });
 
-    const [, init] = mockCrossFetch.mock.calls[0];
+    const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.get("Content-Type")).toBe("application/json");
   });
 });
