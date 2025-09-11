@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.0...v2.1.1) (2025-09-11)
+
+
+### Bug Fixes
+
+* PROD-312 Node ESM Support ([#46](https://github.com/aiola-lab/aiola-js-sdk/issues/46)) ([4509e69](https://github.com/aiola-lab/aiola-js-sdk/commit/4509e69c3fef164421acba49b0f2d25922bb1767))
+
 # [2.1.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.0.10...v2.1.0) (2025-09-04)
 
 
