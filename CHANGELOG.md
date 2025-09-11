@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.1...v2.1.2) (2025-09-11)
+
+
+### Bug Fixes
+
+* PROD-312 - Removed cross fetch ([#47](https://github.com/aiola-lab/aiola-js-sdk/issues/47)) ([9f1994c](https://github.com/aiola-lab/aiola-js-sdk/commit/9f1994cdff9e29db98c4420cf8f97125f1744b56))
+
 ## [2.1.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.0...v2.1.1) (2025-09-11)
 
 
