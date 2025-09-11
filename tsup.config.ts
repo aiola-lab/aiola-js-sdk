@@ -22,16 +22,15 @@ export default defineConfig([
     entry: ['src/index.ts'],
     format: ['esm'],
     platform: 'browser',
-    dts: false, // Don't duplicate .d.ts files
+    dts: false,
     splitting: false,
     sourcemap: true,
     outDir: 'dist/browser',
     outExtension() {
       return { js: '.mjs' }
     },
-    external: ['form-data'], // Don't bundle form-data for browser
+    external: ['form-data'],
     define: {
-      // Replace Node.js-specific code with browser equivalents
       'process.env.NODE_ENV': '"production"'
     }
   }

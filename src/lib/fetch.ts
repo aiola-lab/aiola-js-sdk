@@ -1,4 +1,3 @@
-import { fetch } from "cross-fetch";
 import { AiolaError } from "./errors";
 import { DEFAULT_HEADERS } from "./constants";
 import { ClientConfig } from "./types";
