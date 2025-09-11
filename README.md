@@ -182,13 +182,10 @@ import { AiolaClient } from '@aiola/sdk';
 
 async function createFile() {
   try {
-    // Step 1: Generate access token
     const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
     
-    // Step 2: Create client
     const client = new AiolaClient({ accessToken });
     
-    // Step 3: Generate audio
     const audio = await client.tts.synthesize({
       text: 'Hello, how can I help you today?',
       voice: 'jess',
