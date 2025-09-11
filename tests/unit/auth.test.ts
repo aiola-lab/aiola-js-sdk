@@ -3,27 +3,15 @@ import { DEFAULT_WORKFLOW_ID, DEFAULT_AUTH_BASE_URL } from "../../src/lib/consta
 import { AiolaError } from "../../src/lib/errors";
 import { SessionCloseResponse } from "../../src/lib/types";
 
-// Mock cross-fetch
-jest.mock("cross-fetch", () => {
-  const actual = jest.requireActual("cross-fetch");
-  return {
-    ...actual,
-    fetch: jest.fn(),
-  };
-});
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
-// Mock the fetch implementation  
 jest.mock("../../src/lib/fetch", () => {
   const mockFetch = jest.fn();
   return {
     createUnauthenticatedFetch: jest.fn(() => mockFetch),
     createAuthenticatedFetch: jest.fn(() => mockFetch)
-  };
-});
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const crossFetch = require("cross-fetch");
-const mockCrossFetch: jest.Mock = crossFetch.fetch;
+}});
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createUnauthenticatedFetch } = require("../../src/lib/fetch");
@@ -38,7 +26,6 @@ describe("Auth Client", () => {
     // Get the mocked fetch function from the auth instance
     mockFetch = (auth as any).fetch;
     mockFetch.mockClear();
-    mockCrossFetch.mockClear();
     mockCreateUnauthenticatedFetch.mockClear();
   });
 
