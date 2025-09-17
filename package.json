@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "form-data": "^4.0.3",
-    "nanoid": "^5.1.5",
+    "nanoid": "^3.3.11",
     "socket.io-client": "^4.8.1"
   },
   "exports": {
