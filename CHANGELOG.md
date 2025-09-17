@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.2...v2.1.3) (2025-09-17)
+
+
+### Bug Fixes
+
+* PROD-312 nanoid commonjs support ([#48](https://github.com/aiola-lab/aiola-js-sdk/issues/48)) ([6ba3d6e](https://github.com/aiola-lab/aiola-js-sdk/commit/6ba3d6e99a125dfca89f4cc51f4c6b30352f2a7f))
+
 ## [2.1.2](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.1...v2.1.2) (2025-09-11)
 
 
