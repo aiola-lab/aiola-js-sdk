@@ -49,9 +49,20 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "browser": "./dist/browser/index.mjs",
+      "browser": {
+        "require": "./dist/browser/index.js",
+        "import": "./dist/browser/index.mjs"
+      },
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
+    },
+    "./min": {
+      "browser": {
+        "require": "./dist/browser/index.min.js",
+        "import": "./dist/browser/index.min.mjs"
+      },
+      "require": "./dist/index.min.js",
+      "import": "./dist/index.min.mjs"
     },
     "./package.json": "./package.json"
   },

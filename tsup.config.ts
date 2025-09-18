@@ -17,17 +17,55 @@ export default defineConfig([
       }
     }
   },
-  // Browser build (ESM only)
+  // Node.js build MINIFIED (CJS + ESM)
   {
     entry: ['src/index.ts'],
-    format: ['esm'],
+    format: ['cjs', 'esm'],
+    platform: 'node',
+    dts: false,
+    splitting: false,
+    sourcemap: true,
+    minify: true,
+    outDir: 'dist',
+    outExtension({ format }) {
+      return {
+        js: format === 'cjs' ? '.min.js' : '.min.mjs'
+      }
+    }
+  },
+  // Browser build (CJS + ESM)
+  {
+    entry: ['src/index.ts'],
+    format: ['cjs', 'esm'],
     platform: 'browser',
     dts: false,
     splitting: false,
     sourcemap: true,
     outDir: 'dist/browser',
-    outExtension() {
-      return { js: '.mjs' }
+    outExtension({ format }) {
+      return {
+        js: format === 'cjs' ? '.js' : '.mjs'
+      }
+    },
+    external: ['form-data'],
+    define: {
+      'process.env.NODE_ENV': '"production"'
+    }
+  },
+  // Browser build MINIFIED (CJS + ESM)
+  {
+    entry: ['src/index.ts'],
+    format: ['cjs', 'esm'],
+    platform: 'browser',
+    dts: false,
+    splitting: false,
+    sourcemap: true,
+    minify: true,
+    outDir: 'dist/browser',
+    outExtension({ format }) {
+      return {
+        js: format === 'cjs' ? '.min.js' : '.min.mjs'
+      }
     },
     external: ['form-data'],
     define: {
