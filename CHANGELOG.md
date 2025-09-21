@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.3...v2.1.4) (2025-09-21)
+
+
+### Bug Fixes
+
+* VA-165 Add Support for min.js ([#49](https://github.com/aiola-lab/aiola-js-sdk/issues/49)) ([bf2abb1](https://github.com/aiola-lab/aiola-js-sdk/commit/bf2abb1542f97e80778dcef8f5d09dc6fc1f878a))
+
 ## [2.1.3](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.2...v2.1.3) (2025-09-17)
 
 
