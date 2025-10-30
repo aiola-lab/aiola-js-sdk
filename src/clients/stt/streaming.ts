@@ -5,6 +5,8 @@ import {
   StreamingEventName,
   StreamingEventData,
   ValidEventName,
+  SchemaValues,
+  SetSchemaValuesResponse,
 } from "../../lib/types/StreamingEvents";
 
 export interface StreamingClientOptions {
@@ -101,6 +103,48 @@ export class StreamingClient {
    */
   setKeywords(keywords: Record<string, string>): void {
     this.socket.emit("set_keywords", new TextEncoder().encode(JSON.stringify(keywords)));
+  }
+
+  /**
+   * Set schema values for the streaming session
+   * @param schemaValues - Schema values to set (key path divided by "." mapped to list of option values)
+   * @param callback - Optional callback to handle the acknowledgment response
+   * @example
+   * ```typescript
+   * // Using acknowledgment callback for immediate response
+   * streamingClient.setSchemaValues(
+   *   {
+   *     "appointment.contact.full_name": ["John Doe", "Jane Smith", "Jim Johnson", "Jill Beckham"]
+   *   },
+   *   (response) => {
+   *     if (response.status === "ok") {
+   *       console.log("Schema values set successfully");
+   *     } else {
+   *       console.error("Error:", response.error);
+   *     }
+   *   }
+   * );
+   *
+   * // Listen for schema_values_updated event (when values are actually updated on server)
+   * streamingClient.on("schema_values_updated", (data) => {
+   *   console.log("Schema values updated:", data.schemaValues);
+   *   console.log("Timestamp:", data.timestamp);
+   * });
+   * ```
+   */
+  setSchemaValues(
+    schemaValues: SchemaValues,
+    callback?: (response: SetSchemaValuesResponse) => void
+  ): void {
+    const encodedData = new TextEncoder().encode(JSON.stringify(schemaValues));
+
+    if (callback) {
+      this.socket.emit("set_schema_values", encodedData, callback);
+    } else {
+      this.socket.emit("set_schema_values", encodedData, () => {
+        // Empty callback to satisfy Socket.IO acknowledgment signature
+      });
+    }
   }
 
   /**
