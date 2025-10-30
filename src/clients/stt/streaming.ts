@@ -141,9 +141,7 @@ export class StreamingClient {
     if (callback) {
       this.socket.emit("set_schema_values", encodedData, callback);
     } else {
-      this.socket.emit("set_schema_values", encodedData, () => {
-        // Empty callback to satisfy Socket.IO acknowledgment signature
-      });
+      this.socket.emit("set_schema_values", encodedData);
     }
   }
 

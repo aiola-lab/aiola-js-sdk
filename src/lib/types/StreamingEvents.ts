@@ -41,7 +41,7 @@ export interface ClientToServerEvents {
   set_keywords: (keywords: Uint8Array) => void;
   set_schema_values: (
     schemaValues: Uint8Array,
-    callback: (response: SetSchemaValuesResponse) => void
+    callback?: (response: SetSchemaValuesResponse) => void
   ) => void;
   binary_data: (data: Buffer) => void;
 }
