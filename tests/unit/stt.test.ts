@@ -34,16 +34,43 @@ jest.mock("form-data", () => {
 });
 
 // Mock the streaming socket
-jest.mock("../../src/clients/stt/streaming", () => ({
-  StreamingClient: jest.fn().mockImplementation(() => ({
-    on: jest.fn(),
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    send: jest.fn(),
-    connected: false,
-    id: "mock-socket-id",
-  })),
-}));
+jest.mock("../../src/clients/stt/streaming", () => {
+  const actualModule = jest.requireActual("../../src/clients/stt/streaming");
+  return {
+    StreamingClient: jest.fn().mockImplementation((options: any) => {
+      const mockSocketImpl = {
+        on: jest.fn().mockReturnThis(),
+        off: jest.fn().mockReturnThis(),
+        emit: jest.fn().mockReturnThis(),
+        connect: jest.fn().mockReturnThis(),
+        disconnect: jest.fn().mockReturnThis(),
+        connected: true,
+        id: "test-socket-id",
+      };
+      
+      const instance = {
+        socket: mockSocketImpl,
+        on: jest.fn(),
+        off: jest.fn(),
+        send: jest.fn(),
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        connected: true,
+        id: "mock-socket-id",
+        setSchemaValues: (schemaValues: any, callback?: any) => {
+          const encodedData = new TextEncoder().encode(JSON.stringify(schemaValues));
+          if (callback) {
+            mockSocketImpl.emit("set_schema_values", encodedData, callback);
+          } else {
+            mockSocketImpl.emit("set_schema_values", encodedData);
+          }
+        },
+      };
+      
+      return instance;
+    }),
+  };
+});
 
 // Mock AiolaError with a fromResponse method
 jest.mock("../../src/lib/errors", () => {
@@ -239,6 +266,325 @@ describe("Stt Client – basic functionality", () => {
 
     const socket = stt.stream(streamRequest);
     expect(socket).toBeDefined();
+  });
+});
+
+describe("Stt Client – streaming socket", () => {
+  let mockAuth: jest.Mocked<Auth>;
+  let streamingClientInstance: any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAuth = {
+      getAccessToken: jest.fn().mockResolvedValue("mock-access-token"),
+      apiKeyToToken: jest.fn(),
+      createSession: jest.fn(),
+      clearSession: jest.fn(),
+    } as any;
+
+    // Import and create StreamingClient instance
+    const { StreamingClient } = require("../../src/clients/stt/streaming");
+    streamingClientInstance = new StreamingClient({
+      url: "http://localhost:3000",
+      path: "/socket.io",
+      query: {},
+      headers: {},
+    });
+    // The mock socket is accessible via streamingClientInstance.socket
+  });
+
+  describe("setSchemaValues method", () => {
+    it("should emit set_schema_values event with encoded data without callback", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe", "Jane Smith"],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "set_schema_values",
+        expect.any(Uint8Array)
+      );
+
+      // Verify the encoded data
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should emit set_schema_values event with encoded data and callback", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe", "Jane Smith"],
+      };
+      const mockCallback = jest.fn();
+
+      streamingClientInstance.setSchemaValues(schemaValues, mockCallback);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "set_schema_values",
+        expect.any(Uint8Array),
+        mockCallback
+      );
+    });
+
+    it("should handle multiple schema paths in one call", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe", "Jane Smith"],
+        "appointment.type": ["Consultation", "Follow-up", "Surgery"],
+        "appointment.status": ["Scheduled", "Confirmed", "Cancelled"],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "set_schema_values",
+        expect.any(Uint8Array)
+      );
+
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should handle single value in schema path", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe"],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should handle many values in schema path", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": Array.from(
+          { length: 100 },
+          (_, i) => `Name ${i}`
+        ),
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should handle special characters in schema values", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": [
+          "John O'Reilly",
+          "José García",
+          "李明",
+          'Name with "quotes"',
+          "Name with \\backslash",
+        ],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should handle complex nested schema paths", () => {
+      const schemaValues = {
+        "order.items.product.name": ["Product A", "Product B"],
+        "order.items.product.category": ["Electronics", "Clothing"],
+        "order.shipping.address.country": ["USA", "Canada", "Mexico"],
+        "order.payment.method": ["Credit Card", "PayPal", "Bank Transfer"],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should properly encode and decode data with UTF-8 characters", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["François", "Müller", "Søren"],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      expect(encodedData).toBeInstanceOf(Uint8Array);
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should call the callback with response when provided", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe"],
+      };
+      const mockCallback = jest.fn();
+
+      streamingClientInstance.setSchemaValues(schemaValues, mockCallback);
+
+      // Get the callback passed to emit
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const callbackFn = emitCall?.[2];
+
+      // Simulate server response
+      const response = { status: "ok" };
+      if (typeof callbackFn === "function") {
+        callbackFn(response);
+      }
+
+      expect(mockCallback).toHaveBeenCalledWith(response);
+    });
+
+    it("should handle callback with error response", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe"],
+      };
+      const mockCallback = jest.fn();
+
+      streamingClientInstance.setSchemaValues(schemaValues, mockCallback);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const callbackFn = emitCall?.[2];
+
+      // Simulate server error response
+      const errorResponse = {
+        status: "error",
+        error: {
+          code: "INVALID_SCHEMA",
+          details: "Schema path not found",
+        },
+      };
+      if (typeof callbackFn === "function") {
+        callbackFn(errorResponse);
+      }
+
+      expect(mockCallback).toHaveBeenCalledWith(errorResponse);
+    });
+
+    it("should handle empty schema values object", () => {
+      const schemaValues = {};
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual({});
+    });
+
+    it("should handle empty array in schema values", () => {
+      const schemaValues = {
+        "appointment.contact.full_name": [],
+      };
+
+      streamingClientInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      const encodedData = emitCall?.[1];
+      const decodedData = JSON.parse(
+        new TextDecoder().decode(encodedData as Uint8Array)
+      );
+      expect(decodedData).toEqual(schemaValues);
+    });
+
+    it("should not include callback in emit when not provided", () => {
+      jest.clearAllMocks();
+      const schemaValues = {
+        "appointment.contact.full_name": ["John Doe"],
+      };
+
+      // Need to create new instance after clearing mocks
+      const { StreamingClient } = require("../../src/clients/stt/streaming");
+      const newInstance = new StreamingClient({
+        url: "http://localhost:3000",
+        path: "/socket.io",
+        query: {},
+        headers: {},
+      });
+
+      newInstance.setSchemaValues(schemaValues);
+
+      const instanceSocket = newInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "set_schema_values"
+      );
+      // When no callback, emit should have exactly 2 arguments: event name and data
+      expect(emitCall?.length).toBe(2);
+    });
   });
 });
 

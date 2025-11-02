@@ -15,15 +15,6 @@ export type SchemaValues = Record<string, string[]>;
 export interface SetSchemaValuesResponse {
   status: "ok" | "error";
   message?: string;
-  error?: {
-    code?: string;
-    details?: string;
-  };
-}
-
-export interface SchemaValuesUpdatedEvent {
-  schemaValues: SchemaValues;
-  timestamp?: string;
 }
 
 export interface ServerToClientEvents {
@@ -34,7 +25,7 @@ export interface ServerToClientEvents {
   transcript: (data: TranscriptEvent) => void;
   structured: (data: StructuredEvent) => void;
   translation: (data: TranslationEvent) => void;
-  schema_values_updated: (data: SchemaValuesUpdatedEvent) => void;
+  schema_values_updated: (data: SetSchemaValuesResponse) => void;
 }
 
 export interface ClientToServerEvents {
