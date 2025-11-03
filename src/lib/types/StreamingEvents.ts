@@ -10,7 +10,7 @@ export interface StructuredEvent {
   results: Record<string, unknown>;
 }
 
-export type SchemaValues = Record<string, string[]>;
+export type SchemaValues = Record<string, (string | number)[]>;
 
 export interface SetSchemaValuesResponse {
   status: "ok" | "error";
