@@ -174,6 +174,38 @@ async function liveStreaming() {
 liveStreaming();
 ```
 
+#### Setting Schema Values During Streaming
+
+You can dynamically set schema values during a live streaming session to update recognition parameters in real-time:
+
+```typescript
+connection.on('connect', () => {
+  const contactSchema = {
+    "contact.name": [
+      "John Doe",
+      "Jane Smith",
+      "Bob Johnson",
+    ],
+    "contact.email": [
+      "john@example.com",
+      "jane@example.com",
+    ],
+  };
+
+  connection.setSchemaValues(contactSchema, (response) => {
+    if (response.status === "ok") {
+      console.log("Schema values set successfully");
+    } else {
+      console.error("Error setting schema values:", response);
+    }
+  });
+});
+
+connection.on('schema_values_updated', (data) => {
+  console.log("Schema values updated on server:", data);
+});
+```
+
 ### Text-to-Speech
 
 ```typescript
