@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.4...v2.2.0) (2025-11-06)
+
+
+### Features
+
+* trigger release for feat[VA-199] ([82c25e3](https://github.com/aiola-lab/aiola-js-sdk/commit/82c25e3ccc56de0d741fa48f27bc9d42658acf3c))
+
 ## [2.1.4](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.3...v2.1.4) (2025-09-21)
 
 
