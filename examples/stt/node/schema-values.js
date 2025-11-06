@@ -28,17 +28,20 @@ async function startStreaming() {
       console.log("Connected to Streaming service");
 
       // Set schema values with callback (immediate acknowledgment)
-      const appointmentSchema = {
-        "appointment.contact.contact_full_name": [
+      const contactSchema = {
+        "contact.name": [
           "John Doe",
           "Jane Smith",
-          "Jim Johnson",
-          "Jill Beckham",
+          "Bob Johnson",
+        ],
+        "contact.email": [
+          "john@example.com",
+          "jane@example.com",
         ],
       };
 
       console.log("Setting schema values...");
-      connection.setSchemaValues(appointmentSchema, (response) => {
+      connection.setSchemaValues(contactSchema, (response) => {
         if (response.status === "ok") {
           console.log("Schema values set successfully");
         } else {

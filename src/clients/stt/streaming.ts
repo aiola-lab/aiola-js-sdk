@@ -114,7 +114,8 @@ export class StreamingClient {
    * // Using acknowledgment callback for immediate response
    * streamingClient.setSchemaValues(
    *   {
-   *     "appointment.contact.full_name": ["John Doe", "Jane Smith", "Jim Johnson", "Jill Beckham"]
+   *     "contact.name": ["John Doe", "Jane Smith", "Bob Johnson"],
+   *     "contact.email": ["john@example.com", "jane@example.com"]
    *   },
    *   (response) => {
    *     if (response.status === "ok") {
