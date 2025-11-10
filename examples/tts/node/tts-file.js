@@ -16,8 +16,7 @@ async function createFile() {
     // Step 3: Generate audio
     const audio = await client.tts.synthesize({
       text: "Hello, how can I help you today?",
-      voice: "jess",
-      language: "en",
+      voice_id: "en_us_female",
     });
 
     const fileStream = fs.createWriteStream("./audio.wav");
