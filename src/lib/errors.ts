@@ -98,7 +98,7 @@ export class AiolaError extends Error {
 
 
   toString() {
-    let parts = [this.message];
+    const parts = [this.message];
     if (this.reason) parts.push(`Reason: ${this.reason}`);
     return parts.join(' | ');
   }
