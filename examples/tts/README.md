@@ -23,8 +23,7 @@ async function synthesize(): Promise<void> {
     // Step 3: Synthesize text to audio
     const audio = await client.tts.synthesize({
       text: "Hello, how can I help you today?",
-      voice: "jess",
-      language: "en",
+      voice_id: "en_us_female",
     });
 
     // Step 4: Save audio stream to file

@@ -19,8 +19,7 @@ async function streamTts() {
     // Step 3: Stream audio
     const stream = await client.tts.stream({
       text: "Hello, how can I help you today?",
-      voice: "jess",
-      language: "en",
+      voice_id: "en_us_female",
     });
     
     const audioChunks = [];

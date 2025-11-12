@@ -220,8 +220,7 @@ async function createFile() {
     
     const audio = await client.tts.synthesize({
       text: 'Hello, how can I help you today?',
-      voice: 'jess',
-      language: 'en',
+      voice_id: 'en_us_female',
     });
 
     const fileStream = fs.createWriteStream('./output.wav');
@@ -251,8 +250,7 @@ async function streamTts() {
     
     const stream = await client.tts.stream({
       text: 'Hello, how can I help you today?',
-      voice: 'jess',
-      language: 'en',
+      voice_id: 'en_us_female',
     });
 
     const audioChunks: Buffer[] = [];

@@ -23,7 +23,7 @@ describe("Tts Client – public usage", () => {
     authBaseUrl: "https://auth.aiola.com",
     workflowId: DEFAULT_WORKFLOW_ID
   } as const;
-  const request: TtsRequest = { text: "Hello World", voice: "en-US-1", language: "en" };
+  const request: TtsRequest = { text: "Hello World", voice_id: "en_us_male" };
 
   let tts: Tts;
   let mockAuth: jest.Mocked<Auth>;

@@ -16,7 +16,7 @@ export class Tts extends AbstractClient {
       });
 
       if (!response.body) {
-        throw new AiolaError({ message: "TTS stream failed" });
+        throw await AiolaError.fromResponse(response);
       }
 
       return response.body;
@@ -38,7 +38,7 @@ export class Tts extends AbstractClient {
       });
 
       if (!response.body) {
-        throw new AiolaError({ message: "TTS synthesize failed" });
+        throw await AiolaError.fromResponse(response);
       }
 
       return response.body;
