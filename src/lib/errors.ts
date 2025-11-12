@@ -4,6 +4,10 @@ export interface AiolaErrorOptions {
    */
   message: string;
   /**
+   * Human-readable reason of the error from the server. Will be available in the `.reason` property as well.
+   */
+  reason?: string;
+  /**
    * HTTP status code (when the error originates from an HTTP response).
    */
   status?: number;
@@ -25,16 +29,18 @@ export interface AiolaErrorOptions {
  * `instanceof AiolaError` or inspect the provided metadata.
  */
 export class AiolaError extends Error {
+  public readonly reason?: string;
   public readonly status?: number;
   public readonly code?: string;
   public readonly details?: unknown;
 
-  constructor({ message, status, code, details }: AiolaErrorOptions) {
+  constructor({ message, reason, status, code, details }: AiolaErrorOptions) {
     super(message);
 
     // Set the error name explicitly so it does not get minified/uglified in some bundlers.
     this.name = "AiolaError";
 
+    this.reason = reason;
     this.status = status;
     this.code = code;
     this.details = details;
@@ -46,7 +52,8 @@ export class AiolaError extends Error {
    * meaningful error information coming from the server.
    */
   static async fromResponse(response: Response): Promise<AiolaError> {
-    let message = `Request failed with status ${response.status}`;
+    const message = `Request failed with status ${response.status}`;
+    let reason: string | undefined;
     let code: string | undefined;
     let details: unknown;
 
@@ -66,7 +73,7 @@ export class AiolaError extends Error {
               ? payload.error
               : payload;
 
-          message = errPayload.message ?? message;
+          reason = errPayload.message;
           code = errPayload.code;
           details = errPayload.details ?? errPayload;
         }
@@ -86,6 +93,13 @@ export class AiolaError extends Error {
       };
     }
 
-    return new AiolaError({ message, status: response.status, code, details });
+    return new AiolaError({ message, reason, status: response.status, code, details });
+  }
+
+
+  toString() {
+    let parts = [this.message];
+    if (this.reason) parts.push(`Reason: ${this.reason}`);
+    return parts.join(' | ');
   }
 }
