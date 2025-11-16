@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.2.0...v2.3.0) (2025-11-16)
+
+
+### Features
+
+* AIRND-335-Change TTS interface ([1c11362](https://github.com/aiola-lab/aiola-js-sdk/commit/1c11362304c597150ddf4c1b3cade2fe3eef59ab))
+
 # [2.2.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.1.4...v2.2.0) (2025-11-06)
 
 
