@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.3.0...v2.3.1) (2025-11-26)
+
+
+### Bug Fixes
+
+* AIRND-399 add support for node.js - transcribe file ([#53](https://github.com/aiola-lab/aiola-js-sdk/issues/53)) ([32eca08](https://github.com/aiola-lab/aiola-js-sdk/commit/32eca088c988bf1f2c713a2ee029c7aff213d772))
+
 # [2.3.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.2.0...v2.3.0) (2025-11-16)
 
 
