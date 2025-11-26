@@ -129,4 +129,49 @@ describe("createAuthenticatedFetch", () => {
     const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.get("Content-Type")).toBe("application/json");
   });
+
+  it("does not add Content-Type for Buffer bodies", async () => {
+    const fetch = createAuthenticatedFetch(opts, mockAuth);
+    const bufferBody = Buffer.from("test data");
+    
+    await fetch("/api/upload", { 
+      method: "POST",
+      body: bufferBody as any
+    });
+
+    const [, init] = mockFetch.mock.calls[0];
+    // Should not add application/json Content-Type for Buffer
+    expect(init.headers.get("Content-Type")).toBeUndefined();
+  });
+
+  it("does not add Content-Type for ArrayBuffer bodies", async () => {
+    const fetch = createAuthenticatedFetch(opts, mockAuth);
+    const arrayBuffer = new ArrayBuffer(8);
+    
+    await fetch("/api/upload", { 
+      method: "POST",
+      body: arrayBuffer as any
+    });
+
+    const [, init] = mockFetch.mock.calls[0];
+    // Should not add application/json Content-Type for ArrayBuffer
+    expect(init.headers.get("Content-Type")).toBeUndefined();
+  });
+
+  it("respects pre-set Content-Type headers", async () => {
+    const fetch = createAuthenticatedFetch(opts, mockAuth);
+    const bufferBody = Buffer.from("test data");
+    
+    await fetch("/api/upload", { 
+      method: "POST",
+      body: bufferBody as any,
+      headers: {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundary"
+      }
+    });
+
+    const [, init] = mockFetch.mock.calls[0];
+    // Should preserve the explicitly set Content-Type
+    expect(init.headers.get("Content-Type")).toBe("multipart/form-data; boundary=----WebKitFormBoundary");
+  });
 });

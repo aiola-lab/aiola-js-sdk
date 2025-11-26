@@ -17,6 +17,27 @@ export class Stt extends AbstractClient {
   private readonly path = "/api/voice-streaming/socket.io";
   private readonly namespace = "/events";
 
+  /**
+   * Helper method to append optional form fields to FormData
+   * Accepts both Node.js form-data and browser native FormData
+   */
+  private appendOptionalFields(
+    formData: { append: (name: string, value: string) => void },
+    requestOptions: TranscribeFileRequest
+  ): void {
+    if (requestOptions.language) {
+      formData.append("language", requestOptions.language);
+    }
+
+    if (requestOptions.keywords) {
+      formData.append("keywords", JSON.stringify(requestOptions.keywords));
+    }
+
+    if (requestOptions.vadConfig) {
+      formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
+    }
+  }
+
   public async stream(
     requestOptions: SttStreamRequest
   ): Promise<StreamingClient> {
@@ -63,43 +84,26 @@ export class Stt extends AbstractClient {
         formData.append("file", file);
       }
 
-      if (requestOptions.language) {
-        formData.append("language", requestOptions.language);
-      }
-
-      if (requestOptions.keywords) {
-        formData.append("keywords", JSON.stringify(requestOptions.keywords));
-      }
-
-      if (requestOptions.vadConfig) {
-        formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
-      }
+      // Append optional fields using helper
+      this.appendOptionalFields(formData, requestOptions);
 
       // Get the headers with Content-Type including boundary
       additionalHeaders = formData.getHeaders();
       
-      // Convert to buffer for Node.js fetch
+      // Convert FormData to Buffer for Node.js fetch API
+      // getBuffer() is available in form-data v4.x and works reliably with Node.js fetch (v18+)
       body = formData.getBuffer() as unknown as BodyInit;
     } else {
-      // Use native FormData in browser
-      const formData = new (globalThis.FormData || FormData)();
+      // Use native browser FormData (globalThis.FormData)
+      const formData = new globalThis.FormData();
       
       const { file } = prepareFileForFormData(requestOptions.file);
       
       // In browser, options are not used - File objects have their own metadata
       formData.append("file", file as File);
 
-      if (requestOptions.language) {
-        formData.append("language", requestOptions.language);
-      }
-
-      if (requestOptions.keywords) {
-        formData.append("keywords", JSON.stringify(requestOptions.keywords));
-      }
-
-      if (requestOptions.vadConfig) {
-        formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
-      }
+      // Append optional fields using helper
+      this.appendOptionalFields(formData, requestOptions);
 
       body = formData as unknown as BodyInit;
     }
