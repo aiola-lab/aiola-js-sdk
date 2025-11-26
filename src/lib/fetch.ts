@@ -35,6 +35,7 @@ export function createAuthenticatedFetch(
     headers.set("Authorization", `Bearer ${accessToken}`);
 
     // Handle Content-Type for different body types
+    // Only set Content-Type if not already provided in headers
     if (init.body && !headers.has("Content-Type")) {
       // Don't set Content-Type for FormData - let the browser/Node.js set it with boundary
       const isFormData =
@@ -43,7 +44,15 @@ export function createAuthenticatedFetch(
           init.body.constructor?.name === "FormData");
 
       if (!isFormData) {
-        headers.set("Content-Type", "application/json");
+        // Only set to application/json if it's likely JSON
+        // Don't set for Buffer/ArrayBuffer which might be form-data payload
+        const isBuffer = 
+          (typeof Buffer !== 'undefined' && Buffer.isBuffer?.(init.body)) ||
+          init.body instanceof ArrayBuffer;
+        
+        if (!isBuffer) {
+          headers.set("Content-Type", "application/json");
+        }
       }
     }
 
@@ -84,6 +93,7 @@ export function createUnauthenticatedFetch(
     });
 
     // Handle Content-Type for different body types
+    // Only set Content-Type if not already provided in headers
     if (init.body && !headers.has("Content-Type")) {
       const isFormData =
         init.body instanceof FormData ||
@@ -91,7 +101,15 @@ export function createUnauthenticatedFetch(
           init.body.constructor?.name === "FormData");
 
       if (!isFormData) {
-        headers.set("Content-Type", "application/json");
+        // Only set to application/json if it's likely JSON
+        // Don't set for Buffer/ArrayBuffer which might be form-data payload
+        const isBuffer = 
+          (typeof Buffer !== 'undefined' && Buffer.isBuffer?.(init.body)) ||
+          init.body instanceof ArrayBuffer;
+        
+        if (!isBuffer) {
+          headers.set("Content-Type", "application/json");
+        }
       }
     }
 

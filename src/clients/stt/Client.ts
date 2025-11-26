@@ -46,32 +46,70 @@ export class Stt extends AbstractClient {
   public async transcribeFile(
     requestOptions: TranscribeFileRequest
   ): Promise<TranscribeFileResponse> {
-    const formData = new FormData();
-    
-    const { file, options } = prepareFileForFormData(requestOptions.file);
-    
-    if (options) {
-      formData.append("file", file, options);
-    } else {
-      formData.append("file", file);
-    }
+    // For Node.js, we need to properly handle FormData with the form-data package
+    // For browser, we use the native FormData API
+    let body: BodyInit;
+    let additionalHeaders: Record<string, string> = {};
 
-    if (requestOptions.language) {
-      formData.append("language", requestOptions.language);
-    }
+    if (RUNTIME.type === "node") {
+      // Use the form-data package in Node.js
+      const formData = new FormData();
+      
+      const { file, options } = prepareFileForFormData(requestOptions.file);
+      
+      if (options) {
+        formData.append("file", file, options);
+      } else {
+        formData.append("file", file);
+      }
 
-    if (requestOptions.keywords) {
-      formData.append("keywords", JSON.stringify(requestOptions.keywords));
-    }
+      if (requestOptions.language) {
+        formData.append("language", requestOptions.language);
+      }
 
-    if (requestOptions.vadConfig) {
-      formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
+      if (requestOptions.keywords) {
+        formData.append("keywords", JSON.stringify(requestOptions.keywords));
+      }
+
+      if (requestOptions.vadConfig) {
+        formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
+      }
+
+      // Get the headers with Content-Type including boundary
+      additionalHeaders = formData.getHeaders();
+      
+      // Convert to buffer for Node.js fetch
+      body = formData.getBuffer() as unknown as BodyInit;
+    } 
+    else
+    {
+      // Use native FormData in browser
+      const formData = new (globalThis.FormData || FormData)();
+      
+      const { file, options } = prepareFileForFormData(requestOptions.file);
+      
+      // In browser, options are not used - File objects have their own metadata
+      formData.append("file", file as File);
+
+      if (requestOptions.language) {
+        formData.append("language", requestOptions.language);
+      }
+
+      if (requestOptions.keywords) {
+        formData.append("keywords", JSON.stringify(requestOptions.keywords));
+      }
+
+      if (requestOptions.vadConfig) {
+        formData.append("vad_config", JSON.stringify(requestOptions.vadConfig));
+      }
+
+      body = formData as unknown as BodyInit;
     }
 
     const response = await this.fetch("/api/speech-to-text/file", {
       method: "POST",
-      body: formData as unknown as BodyInit,
-      headers: RUNTIME.type === "node" ? formData.getHeaders() : undefined,
+      body,
+      headers: additionalHeaders,
     });
 
     return response.json();
