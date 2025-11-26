@@ -80,13 +80,11 @@ export class Stt extends AbstractClient {
       
       // Convert to buffer for Node.js fetch
       body = formData.getBuffer() as unknown as BodyInit;
-    } 
-    else
-    {
+    } else {
       // Use native FormData in browser
       const formData = new (globalThis.FormData || FormData)();
       
-      const { file, options } = prepareFileForFormData(requestOptions.file);
+      const { file } = prepareFileForFormData(requestOptions.file);
       
       // In browser, options are not used - File objects have their own metadata
       formData.append("file", file as File);
