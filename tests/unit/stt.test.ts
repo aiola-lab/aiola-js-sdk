@@ -30,6 +30,7 @@ jest.mock("form-data", () => {
     getHeaders: jest.fn().mockReturnValue({
       "content-type": "multipart/form-data; boundary=test",
     }),
+    getBuffer: jest.fn().mockReturnValue(Buffer.from("mock-form-data-buffer")),
   }));
 });
 
@@ -641,6 +642,7 @@ describe("Stt Client – transcribeFile method", () => {
       getHeaders: jest.fn().mockReturnValue({
         "content-type": "multipart/form-data; boundary=test",
       }),
+      getBuffer: jest.fn().mockReturnValue(Buffer.from("mock-form-data-buffer")),
     };
     FormData.mockImplementation(() => mockFormData);
 
@@ -661,9 +663,10 @@ describe("Stt Client – transcribeFile method", () => {
       const result = await stt.transcribeFile({ file: mockFile });
 
       expect(mockFormData.append).toHaveBeenCalledWith("file", mockFile);
+      expect(mockFormData.getBuffer).toHaveBeenCalled();
       expect(mockFetch).toHaveBeenCalledWith("/api/speech-to-text/file", {
         method: "POST",
-        body: mockFormData,
+        body: Buffer.from("mock-form-data-buffer"),
         headers: mockFormData.getHeaders(),
       });
       expect(result).toEqual(mockTranscriptionResponse);
