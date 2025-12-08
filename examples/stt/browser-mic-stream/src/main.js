@@ -35,19 +35,30 @@ function initializeButtons() {
 async function initializeClient() {
   if (client) return client;
   
-  const apiKey = prompt("Please enter your API key:");
-  if (!apiKey) {
-    throw new Error("API key is required");
+  // Read required environment variables
+  const apiKey = import.meta.env.VITE_AIOLA_API_KEY;
+  const workflowId = import.meta.env.VITE_AIOLA_WORKFLOW_ID;
+
+  // Read optional environment variables
+  const authBaseUrl = import.meta.env.VITE_AIOLA_AUTH_BASE_URL;
+  const baseUrl = import.meta.env.VITE_AIOLA_BASE_URL;
+
+  // Validate required environment variables
+  if (!apiKey || !workflowId) {
+    throw new Error("AIOLA_API_KEY and AIOLA_WORKFLOW_ID must be set in the environment variables");
   }
   
   try {
     showMessage("Generating access token...");
     const { accessToken } = await AiolaClient.grantToken({
-      apiKey: apiKey,
+      apiKey,
+      workflowId,
+      ...(authBaseUrl ? { authBaseUrl } : {}),
     });
     
     client = new AiolaClient({
-      accessToken: accessToken
+      accessToken,
+      ...(baseUrl ? { baseUrl } : {}),
     });
     
     showMessage("Client initialized successfully");
@@ -84,8 +95,8 @@ async function createStreamingConnection() {
     transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
   });
 
-  connection.on("disconnect", () => {
-    console.log("Connection closed");
+  connection.on("disconnect", (reason) => {
+    console.log("Connection closed, reason:", reason);
     isConnected = false;
     isConnecting = false;
     updateConnectionStatus(false);
@@ -95,14 +106,36 @@ async function createStreamingConnection() {
 
   connection.on("error", (error) => {
     console.error("Connection Error:", error);
+    isConnecting = false;
+    isConnected = false;
+    updateConnectionStatus(false);
     showMessage(`Error: ${error.message}`, true);
+  });
+
+  connection.on("connect_error", (error) => {
+    console.error("Connection Error (connect_error):", error);
+    isConnecting = false;
+    isConnected = false;
+    updateConnectionStatus(false);
+    showMessage(`Connection failed: ${error.message}`, true);
   });
 }
 
 async function setupMicrophone() {
   if (audioContext) return;
 
+  // Request a sample rate of 16KHz, as this is the required sample rate for the API.
+  // In case the browser does not support this, the audio-processor.js will handle resampling to 16kHz.
   audioContext = new AudioContext({ sampleRate: 16000 });
+  
+  console.log(`[Setup] AudioContext sample rate: ${audioContext.sampleRate}Hz`);
+  console.log(`[Setup] Target sample rate for API: 16000Hz`);
+  
+  if (audioContext.sampleRate !== 16000) {
+    console.log(`[Setup] Resampling will be applied: ${audioContext.sampleRate}Hz → 16000Hz`);
+    showMessage(`Audio resampling active (${audioContext.sampleRate}Hz → 16kHz)`);
+  }
+  
   await audioContext.audioWorklet.addModule("/audio-processor.js");
 
   microphoneStream = await navigator.mediaDevices.getUserMedia({
