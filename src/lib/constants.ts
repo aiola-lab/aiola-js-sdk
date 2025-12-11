@@ -1,5 +1,3 @@
-import { RUNTIME } from "./runtime";
-
 export const DEFAULT_BASE_URL = "https://apis.aiola.ai";
 export const DEFAULT_AUTH_BASE_URL = "https://auth.aiola.ai";
 
