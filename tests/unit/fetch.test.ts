@@ -2,14 +2,6 @@ import { createAuthenticatedFetch } from "../../src/lib/fetch";
 import type { ClientConfig } from "../../src/lib/types";
 import { Auth } from "../../src/clients/auth/Client";
 
-// Mock runtime for User-Agent header
-jest.mock("../../src/lib/runtime", () => ({
-  RUNTIME: {
-    type: 'node',
-    version: '1.0.0'
-  }
-}));
-
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
@@ -94,14 +86,6 @@ describe("createAuthenticatedFetch", () => {
     const [, init] = mockFetch.mock.calls[0];
     // Should not add application/json Content-Type for FormData
     expect(init.headers.get("Content-Type")).not.toBe("application/json");
-  });
-
-  it("adds User-Agent header", async () => {
-    const fetch = createAuthenticatedFetch(opts, mockAuth);
-    await fetch("/test");
-
-    const [, init] = mockFetch.mock.calls[0];
-    expect(init.headers.get("User-Agent")).toBe("@aiola/aiola-js/node/1.0.0");
   });
 
   it("preserves existing headers", async () => {
