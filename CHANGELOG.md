@@ -1,3 +1,10 @@
+## [2.3.2](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.3.1...v2.3.2) (2025-12-11)
+
+
+### Bug Fixes
+
+* [AIRND-896] delete aiola-js agent header ([#55](https://github.com/aiola-lab/aiola-js-sdk/issues/55)) ([a68cca6](https://github.com/aiola-lab/aiola-js-sdk/commit/a68cca62b2364ed5cb838d463b92c19746926966))
+
 ## [2.3.1](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.3.0...v2.3.1) (2025-11-26)
 
 
