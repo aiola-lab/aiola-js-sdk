@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.3.2...v2.4.0) (2026-01-06)
+
+
+### Features
+
+* [AIRND-1224] add optional metadata to binary_data streaming ([#56](https://github.com/aiola-lab/aiola-js-sdk/issues/56)) ([ffeeae4](https://github.com/aiola-lab/aiola-js-sdk/commit/ffeeae4d2fb9c615a3172f49c964487e68ff24b6))
+
 ## [2.3.2](https://github.com/aiola-lab/aiola-js-sdk/compare/v2.3.1...v2.3.2) (2025-12-11)
 
 
