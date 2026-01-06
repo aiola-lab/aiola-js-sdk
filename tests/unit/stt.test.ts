@@ -53,7 +53,13 @@ jest.mock("../../src/clients/stt/streaming", () => {
         socket: mockSocketImpl,
         on: jest.fn(),
         off: jest.fn(),
-        send: jest.fn(),
+        send: (audioData: Buffer, metadata?: Record<string, unknown>) => {
+          if (metadata) {
+            mockSocketImpl.emit("binary_data", audioData, metadata);
+          } else {
+            mockSocketImpl.emit("binary_data", audioData);
+          }
+        },
         connect: jest.fn(),
         disconnect: jest.fn(),
         connected: true,
@@ -584,6 +590,87 @@ describe("Stt Client – streaming socket", () => {
         (call: any[]) => call[0] === "set_schema_values"
       );
       // When no callback, emit should have exactly 2 arguments: event name and data
+      expect(emitCall?.length).toBe(2);
+    });
+  });
+
+  describe("send method with metadata", () => {
+    it("should emit binary_data with metadata when provided", () => {
+      const audioData = Buffer.from("test audio");
+      const metadata = { sub_flow_id: "container-123" };
+
+      streamingClientInstance.send(audioData, metadata);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "binary_data",
+        audioData,
+        metadata
+      );
+    });
+
+    it("should emit binary_data without metadata when not provided", () => {
+      const audioData = Buffer.from("test audio");
+
+      streamingClientInstance.send(audioData);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith("binary_data", audioData);
+    });
+
+    it("should handle empty metadata object", () => {
+      const audioData = Buffer.from("test audio");
+      const metadata = {};
+
+      streamingClientInstance.send(audioData, metadata);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "binary_data",
+        audioData,
+        metadata
+      );
+    });
+
+    it("should handle metadata with multiple fields", () => {
+      const audioData = Buffer.from("test audio");
+      const metadata = {
+        sub_flow_id: "container-123",
+        custom_field: "value",
+        numeric_field: 42,
+      };
+
+      streamingClientInstance.send(audioData, metadata);
+
+      const instanceSocket = streamingClientInstance.socket as any;
+      expect(instanceSocket.emit).toHaveBeenCalledWith(
+        "binary_data",
+        audioData,
+        metadata
+      );
+    });
+
+    it("should not include metadata in emit when undefined", () => {
+      jest.clearAllMocks();
+      const audioData = Buffer.from("test audio");
+
+      // Need to create new instance after clearing mocks
+      const { StreamingClient } = require("../../src/clients/stt/streaming");
+      const newInstance = new StreamingClient({
+        url: "http://localhost:3000",
+        path: "/socket.io",
+        query: {},
+        headers: {},
+      });
+
+      newInstance.send(audioData);
+
+      const instanceSocket = newInstance.socket as any;
+      const emitCalls = instanceSocket.emit.mock.calls;
+      const emitCall = emitCalls.find(
+        (call: any[]) => call[0] === "binary_data"
+      );
+      // When no metadata, emit should have exactly 2 arguments: event name and data
       expect(emitCall?.length).toBe(2);
     });
   });

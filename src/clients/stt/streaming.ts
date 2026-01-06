@@ -7,6 +7,7 @@ import {
   ValidEventName,
   SchemaValues,
   SetSchemaValuesResponse,
+  BinaryDataMetadata,
 } from "../../lib/types/StreamingEvents";
 
 export interface StreamingClientOptions {
@@ -48,9 +49,14 @@ export class StreamingClient {
   /**
    * Send audio data to the streaming service
    * @param audioData - Audio data buffer to send
+   * @param metadata - Optional metadata to send with the audio chunk (e.g., { sub_flow_id: 'container-123' })
    */
-  send(audioData: Buffer): void {
-    this.socket.emit("binary_data", audioData);
+  send(audioData: Buffer, metadata?: BinaryDataMetadata): void {
+    if (metadata) {
+      this.socket.emit("binary_data", audioData, metadata);
+    } else {
+      this.socket.emit("binary_data", audioData);
+    }
   }
 
   /**

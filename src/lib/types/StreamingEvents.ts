@@ -28,13 +28,21 @@ export interface ServerToClientEvents {
   schema_values_updated: (data: SetSchemaValuesResponse) => void;
 }
 
+/**
+ * Optional metadata to send with each audio chunk.
+ * Can include fields like sub_flow_id for routing purposes.
+ */
+export interface BinaryDataMetadata {
+  [key: string]: unknown;
+}
+
 export interface ClientToServerEvents {
   set_keywords: (keywords: Uint8Array) => void;
   set_schema_values: (
     schemaValues: Uint8Array,
     callback?: (response: SetSchemaValuesResponse) => void
   ) => void;
-  binary_data: (data: Buffer) => void;
+  binary_data: (data: Buffer, metadata?: BinaryDataMetadata) => void;
 }
 
 export type StreamingEventName = keyof Omit<
