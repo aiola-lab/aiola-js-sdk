@@ -13,6 +13,12 @@ import { DEFAULT_WORKFLOW_ID } from "../../lib/constants";
 import { prepareFileForFormData } from "../../lib/files";
 import { RUNTIME } from "../../lib/runtime";
 
+/**
+ * Speech-to-Text (STT) client for audio transcription services.
+ * 
+ * Provides both file-based transcription and real-time streaming capabilities.
+ * Supports multiple audio formats (WAV, MP3, M4A, OGG, FLAC) and various AI tasks.
+ */
 export class Stt extends AbstractClient {
   private readonly path = "/api/voice-streaming/socket.io";
   private readonly namespace = "/events";
@@ -38,6 +44,51 @@ export class Stt extends AbstractClient {
     }
   }
 
+  /**
+   * Creates a real-time streaming connection for audio transcription.
+   * 
+   * The streaming API uses WebSocket for low-latency, bidirectional communication.
+   * Audio should be sent as 16-bit PCM at 16kHz sample rate, mono channel.
+   * 
+   * @param requestOptions - Streaming configuration options
+   * @param requestOptions.workflowId - Optional workflow ID (defaults to standard workflow)
+   * @param requestOptions.executionId - Optional execution ID for tracking (auto-generated if not provided)
+   * @param requestOptions.langCode - Optional language code (e.g., 'en', 'es', 'fr')
+   * @param requestOptions.timeZone - Optional timezone for timestamps (defaults to 'UTC')
+   * @param requestOptions.keywords - Optional keywords map for boosting recognition
+   * @param requestOptions.tasksConfig - Optional AI tasks configuration
+   * @param requestOptions.vadConfig - Optional Voice Activity Detection configuration
+   * 
+   * @returns A StreamingClient instance ready to connect
+   * 
+   * @throws {AiolaError} If connection fails to initialize
+   * 
+   * @example
+   * ```typescript
+   * // Create a streaming session
+   * const stream = await client.stt.stream({ 
+   *   langCode: 'en',
+   *   vadConfig: { 
+   *     minSpeechDurationMs: 250,
+   *     minSilenceDurationMs: 500
+   *   }
+   * });
+   * 
+   * // Listen for transcription events
+   * stream.on('transcript', (data) => {
+   *   console.log('Transcript:', data.text);
+   * });
+   * 
+   * // Connect and start streaming
+   * stream.connect();
+   * 
+   * // Send audio data (16-bit PCM, 16kHz, mono)
+   * stream.send(audioBuffer);
+   * 
+   * // Close when done
+   * stream.disconnect();
+   * ```
+   */
   public async stream(
     requestOptions: SttStreamRequest
   ): Promise<StreamingClient> {
@@ -64,6 +115,43 @@ export class Stt extends AbstractClient {
     return socket;
   }
 
+  /**
+   * Transcribes an audio file to text.
+   * 
+   * Supports multiple audio formats including WAV, MP3, M4A, OGG, and FLAC.
+   * The file is uploaded and processed on the server, with results returned
+   * once transcription is complete.
+   * 
+   * Works in both Node.js and browser environments with appropriate file handling
+   * for each platform.
+   * 
+   * @param requestOptions - Transcription request options
+   * @param requestOptions.file - Audio file to transcribe (File, Blob, Buffer, or path string)
+   * @param requestOptions.language - Optional language code (e.g., 'en', 'es', 'fr')
+   * @param requestOptions.keywords - Optional keywords map for boosting recognition
+   * @param requestOptions.vadConfig - Optional Voice Activity Detection configuration
+   * 
+   * @returns Transcription response with text, segments, and metadata
+   * 
+   * @example
+   * ```typescript
+   * // Node.js: transcribe from file path
+   * const result = await client.stt.transcribeFile({
+   *   file: './audio.wav',
+   *   language: 'en'
+   * });
+   * console.log('Transcription:', result.text);
+   * console.log('Segments:', result.segments);
+   * 
+   * // Browser: transcribe from File object
+   * const fileInput = document.querySelector('input[type="file"]');
+   * const result = await client.stt.transcribeFile({
+   *   file: fileInput.files[0],
+   *   language: 'en',
+   *   keywords: { 'product': 'ProductName' }
+   * });
+   * ```
+   */
   public async transcribeFile(
     requestOptions: TranscribeFileRequest
   ): Promise<TranscribeFileResponse> {

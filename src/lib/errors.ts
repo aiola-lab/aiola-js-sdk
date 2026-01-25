@@ -1,22 +1,46 @@
+/**
+ * Options for creating an AiolaError instance.
+ */
 export interface AiolaErrorOptions {
   /**
-   * Human-readable description of the error. Will be available in the `.message` property as well.
+   * Human-readable description of the error.
+   * Will be available in the `.message` property as well.
    */
   message: string;
+  
   /**
-   * Human-readable reason of the error from the server. Will be available in the `.reason` property as well.
+   * Human-readable reason of the error from the server.
+   * Provides more detailed explanation than the message.
+   * Will be available in the `.reason` property as well.
    */
   reason?: string;
+  
   /**
    * HTTP status code (when the error originates from an HTTP response).
+   * 
+   * Common codes:
+   * - 400: Bad Request (invalid parameters)
+   * - 401: Unauthorized (invalid or expired token)
+   * - 403: Forbidden (insufficient permissions)
+   * - 404: Not Found (resource doesn't exist)
+   * - 429: Too Many Requests (rate limit exceeded)
+   * - 500: Internal Server Error
+   * - 503: Service Unavailable
    */
   status?: number;
+  
   /**
-   * Optional machine-readable error code coming from the API.
+   * Machine-readable error code from the API.
+   * 
+   * Use this to programmatically handle specific error types
+   * (e.g., TOKEN_EXPIRED, MAX_CONCURRENCY_REACHED).
    */
   code?: string;
+  
   /**
    * Any additional information that may help debugging the problem.
+   * 
+   * May include validation errors, stack traces, or other diagnostic data.
    */
   details?: unknown;
 }
@@ -27,6 +51,37 @@ export interface AiolaErrorOptions {
  * Keeping a single error shape makes it easier to handle failures in a
  * predictable way on the client side. Consumers can check for
  * `instanceof AiolaError` or inspect the provided metadata.
+ * 
+ * Common error codes:
+ * - `TOKEN_EXPIRED`: The access token has expired and needs to be refreshed
+ * - `INVALID_TOKEN`: The access token is malformed or invalid
+ * - `MAX_CONCURRENCY_REACHED`: Too many concurrent sessions for your account
+ * - `INVALID_AUDIO_FORMAT`: The audio format is not supported
+ * - `RATE_LIMIT_EXCEEDED`: Too many requests in a short period
+ * - `WORKFLOW_NOT_FOUND`: The specified workflow ID does not exist
+ * - `UNAUTHORIZED`: Invalid API key or insufficient permissions
+ * - `VALIDATION_ERROR`: Request parameters are invalid
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   const result = await client.stt.transcribeFile({ file: audioFile });
+ * } catch (error) {
+ *   if (error instanceof AiolaError) {
+ *     console.error('Error code:', error.code);
+ *     console.error('Status:', error.status);
+ *     console.error('Message:', error.message);
+ *     console.error('Reason:', error.reason);
+ *     
+ *     // Handle specific errors
+ *     if (error.code === 'TOKEN_EXPIRED') {
+ *       // Refresh token and retry
+ *     } else if (error.code === 'MAX_CONCURRENCY_REACHED') {
+ *       // Wait and retry, or close other sessions
+ *     }
+ *   }
+ * }
+ * ```
  */
 export class AiolaError extends Error {
   public readonly reason?: string;

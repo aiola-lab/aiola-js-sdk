@@ -210,7 +210,7 @@ connection.on('schema_values_updated', (data) => {
 
 ```typescript
 import fs from 'fs';
-import { AiolaClient } from '@aiola/sdk';
+import { AiolaClient, VoiceId } from '@aiola/sdk';
 
 async function createFile() {
   try {
@@ -220,7 +220,7 @@ async function createFile() {
     
     const audio = await client.tts.synthesize({
       text: 'Hello, how can I help you today?',
-      voice_id: 'en_us_female',
+      voice_id: VoiceId.EnglishUSFemale, // Type-safe enum
     });
 
     const fileStream = fs.createWriteStream('./output.wav');
@@ -240,7 +240,7 @@ createFile();
 ### Text-to-Speech – streaming
 
 ```typescript
-import { AiolaClient } from '@aiola/sdk';
+import { AiolaClient, VoiceId } from '@aiola/sdk';
 
 async function streamTts() {
   try {
@@ -250,7 +250,7 @@ async function streamTts() {
     
     const stream = await client.tts.stream({
       text: 'Hello, how can I help you today?',
-      voice_id: 'en_us_female',
+      voice_id: VoiceId.EnglishUSFemale, // Type-safe enum
     });
 
     const audioChunks: Buffer[] = [];
@@ -277,3 +277,606 @@ npm install
 npm run dev
 ```
 - Uses the [`AudioWorklet`](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) API to capture microphone audio, convert it to 16-bit PCM (16 kHz, mono), and send it through the WebSocket returned.
+
+---
+
+## API Reference
+
+### AiolaClient
+
+Main client for interacting with the Aiola API.
+
+#### Static Methods
+
+##### `AiolaClient.grantToken(options)`
+
+Generates an access token from an API key.
+
+**Parameters:**
+- `apiKey` (string, required): Your Aiola API key
+- `baseUrl` (string, optional): Custom API base URL
+- `authBaseUrl` (string, optional): Custom authentication base URL
+- `workflowId` (string, optional): Custom workflow ID
+
+**Returns:** `Promise<GrantTokenResponse>`
+- `accessToken` (string): JWT access token for API authentication
+- `sessionId` (string): Unique session identifier
+
+##### `AiolaClient.closeSession(accessToken, options)`
+
+Closes a session on the server and frees up concurrency slots.
+
+**Parameters:**
+- `accessToken` (string, required): The access token for the session
+- `options` (AuthOptions, required): Authentication configuration
+
+**Returns:** `Promise<SessionCloseResponse>`
+
+#### Constructor
+
+##### `new AiolaClient(options)`
+
+Creates a new AiolaClient instance.
+
+**Parameters:**
+- `accessToken` (string, required): Valid access token from `grantToken()`
+- `baseUrl` (string, optional): Custom API base URL
+- `authBaseUrl` (string, optional): Custom authentication base URL
+- `workflowId` (string, optional): Custom workflow ID
+
+#### Properties
+
+##### `client.stt`
+
+Gets the Speech-to-Text (STT) client.
+
+**Type:** `Stt`
+
+##### `client.tts`
+
+Gets the Text-to-Speech (TTS) client.
+
+**Type:** `Tts`
+
+##### `client.auth`
+
+Gets the authentication client (internal use).
+
+**Type:** `Auth`
+
+##### `client.options`
+
+Gets the client configuration options.
+
+**Type:** `ClientConfig`
+
+---
+
+### STT Client
+
+Speech-to-Text client for audio transcription.
+
+#### Methods
+
+##### `client.stt.transcribeFile(options)`
+
+Transcribes an audio file to text.
+
+**Parameters:**
+- `file` (FileSource, required): Audio file (File, Blob, Buffer, ReadStream, or file path)
+- `language` (string, optional): Language code (e.g., 'en', 'es', 'fr')
+- `keywords` (Record<string, string>, optional): Keywords map for boosting recognition
+- `vadConfig` (VadConfig, optional): Voice Activity Detection configuration
+
+**Supported audio formats:** WAV, MP3, M4A, OGG, FLAC
+
+**Returns:** `Promise<TranscribeFileResponse>`
+- `transcript` (string): Complete transcription with formatting
+- `raw_transcript` (string): Raw transcription without post-processing
+- `segments` (Segment[]): Time segments where speech was detected
+- `metadata` (TranscriptionMetadata): File metadata and transcription info
+
+##### `client.stt.stream(options)`
+
+Creates a real-time streaming connection for audio transcription.
+
+**Parameters:**
+- `langCode` (string, optional): Language code (e.g., 'en', 'es', 'fr')
+- `workflowId` (string, optional): Custom workflow ID
+- `executionId` (string, optional): Execution ID for tracking (auto-generated if not provided)
+- `timeZone` (string, optional): Timezone for timestamps (default: 'UTC')
+- `keywords` (Record<string, string>, optional): Keywords map for boosting recognition
+- `tasksConfig` (TasksConfig, optional): AI tasks configuration
+- `vadConfig` (VadConfig, optional): Voice Activity Detection configuration
+
+**Returns:** `Promise<StreamingClient>`
+
+**Audio format requirements:** 16-bit PCM, 16kHz sample rate, mono channel
+
+---
+
+### StreamingClient
+
+WebSocket client for real-time audio streaming.
+
+#### Methods
+
+##### `stream.connect()`
+
+Establishes the WebSocket connection. Returns `this` for chaining.
+
+##### `stream.disconnect()`
+
+Closes the WebSocket connection. Returns `this` for chaining.
+
+##### `stream.send(audioData, metadata?)`
+
+Sends audio data to the streaming service.
+
+**Parameters:**
+- `audioData` (Buffer, required): Audio data (16-bit PCM, 16kHz, mono)
+- `metadata` (BinaryDataMetadata, optional): Optional metadata for the chunk
+
+##### `stream.on(event, listener)`
+
+Registers an event listener. Returns `this` for chaining.
+
+**Available events:**
+- `connect`: Connection established
+- `disconnect`: Connection closed
+- `transcript`: Transcription results received
+- `structured`: Structured data extraction results
+- `translation`: Translation results (if enabled)
+- `schema_values_updated`: Schema values update confirmation
+- `error`: Error occurred
+- `connect_error`: Connection error
+
+##### `stream.off(event, listener?)`
+
+Removes an event listener. Returns `this` for chaining.
+
+##### `stream.setKeywords(keywords)`
+
+Sets or updates keywords for recognition boosting.
+
+**Parameters:**
+- `keywords` (Record<string, string>, required): Map of spoken phrases to written forms
+
+##### `stream.setSchemaValues(schemaValues, callback?)`
+
+Sets schema values for structured data extraction.
+
+**Parameters:**
+- `schemaValues` (SchemaValues, required): Map of field paths to expected values
+- `callback` (function, optional): Acknowledgment callback
+
+#### Properties
+
+##### `stream.connected`
+
+Indicates whether the client is currently connected.
+
+**Type:** `boolean`
+
+##### `stream.id`
+
+Gets the unique socket connection ID.
+
+**Type:** `string | undefined`
+
+---
+
+### TTS Client
+
+Text-to-Speech client for converting text to spoken audio.
+
+#### Methods
+
+##### `client.tts.synthesize(options)`
+
+Synthesizes text to speech with complete generation.
+
+**Parameters:**
+- `text` (string, required): Text to convert to speech
+- `voice_id` (VoiceId | string, required): Voice identifier
+
+**Supported voice IDs (VoiceId enum):**
+
+| Enum Value | String Value | Description |
+|------------|--------------|-------------|
+| `VoiceId.EnglishUSFemale` | `'en_us_female'` | English (US) Female |
+| `VoiceId.EnglishUSMale` | `'en_us_male'` | English (US) Male |
+| `VoiceId.SpanishFemale` | `'es_female'` | Spanish Female |
+| `VoiceId.SpanishMale` | `'es_male'` | Spanish Male |
+| `VoiceId.FrenchFemale` | `'fr_female'` | French Female |
+| `VoiceId.FrenchMale` | `'fr_male'` | French Male |
+| `VoiceId.GermanFemale` | `'de_female'` | German Female |
+| `VoiceId.GermanMale` | `'de_male'` | German Male |
+| `VoiceId.JapaneseFemale` | `'ja_female'` | Japanese Female |
+| `VoiceId.JapaneseMale` | `'ja_male'` | Japanese Male |
+| `VoiceId.PortugueseFemale` | `'pt_female'` | Portuguese Female |
+| `VoiceId.PortugueseMale` | `'pt_male'` | Portuguese Male |
+
+**Returns:** `Promise<ReadableStream<Uint8Array>>`
+
+**Example:**
+```typescript
+import { VoiceId } from '@aiola/sdk';
+
+// Using enum (recommended - type-safe)
+const audio = await client.tts.synthesize({
+  text: 'Hello, world!',
+  voice_id: VoiceId.EnglishUSFemale
+});
+
+// Or using string
+const audio = await client.tts.synthesize({
+  text: 'Hello, world!',
+  voice_id: 'en_us_female'
+});
+```
+
+##### `client.tts.stream(options)`
+
+Synthesizes text to speech with streaming delivery (lower latency).
+
+**Parameters:**
+- `text` (string, required): Text to convert to speech
+- `voice_id` (VoiceId | string, required): Voice identifier (see supported voices above)
+
+**Returns:** `Promise<ReadableStream<Uint8Array>>`
+
+---
+
+### Streaming Events Reference
+
+#### `transcript` Event
+
+Emitted when new transcription text is available.
+
+**Payload:**
+```typescript
+{
+  transcript: string  // The transcribed text
+}
+```
+
+#### `structured` Event
+
+Emitted when structured data is extracted (requires FORM_FILLING task).
+
+**Payload:**
+```typescript
+{
+  results: Record<string, unknown>  // Structured data extracted
+}
+```
+
+#### `translation` Event
+
+Emitted when translation is available (requires TRANSLATION task).
+
+**Payload:**
+```typescript
+{
+  translation: string  // The translated text
+}
+```
+
+#### `schema_values_updated` Event
+
+Emitted when schema values are successfully updated.
+
+**Payload:**
+```typescript
+{
+  status: 'ok' | 'error',
+  message?: string
+}
+```
+
+#### Connection Events
+
+- `connect`: Fired when WebSocket connection is established
+- `disconnect`: Fired when WebSocket connection is closed
+- `error`: Fired when an error occurs (receives Error object)
+- `connect_error`: Fired when a connection error occurs (receives Error object)
+
+---
+
+### Error Handling
+
+All errors thrown by the SDK are instances of `AiolaError`.
+
+#### Error Properties
+
+```typescript
+{
+  message: string      // Human-readable error description
+  reason?: string      // Detailed explanation from server
+  status?: number      // HTTP status code
+  code?: string        // Machine-readable error code
+  details?: unknown    // Additional diagnostic information
+}
+```
+
+#### Common Error Codes
+
+| Code | Description | How to Handle |
+|------|-------------|---------------|
+| `TOKEN_EXPIRED` | Access token has expired | Generate a new token using `grantToken()` |
+| `INVALID_TOKEN` | Access token is malformed or invalid | Verify your API key and generate a new token |
+| `MAX_CONCURRENCY_REACHED` | Too many concurrent sessions | Close existing sessions or wait for them to expire |
+| `INVALID_AUDIO_FORMAT` | Audio format is not supported | Use WAV, MP3, M4A, OGG, or FLAC format |
+| `RATE_LIMIT_EXCEEDED` | Too many requests in a short period | Implement exponential backoff and retry |
+| `WORKFLOW_NOT_FOUND` | Specified workflow ID doesn't exist | Verify your workflow ID or use the default |
+| `UNAUTHORIZED` | Invalid API key or insufficient permissions | Check your API key and account permissions |
+| `VALIDATION_ERROR` | Request parameters are invalid | Check parameter types and required fields |
+
+#### Error Handling Example
+
+```typescript
+try {
+  const result = await client.stt.transcribeFile({ file: audioFile });
+} catch (error) {
+  if (error instanceof AiolaError) {
+    console.error('Error code:', error.code);
+    console.error('Status:', error.status);
+    console.error('Message:', error.message);
+    
+    // Handle specific errors
+    switch (error.code) {
+      case 'TOKEN_EXPIRED':
+        // Refresh token and retry
+        const { accessToken } = await AiolaClient.grantToken({ apiKey: AIOLA_API_KEY });
+        const newClient = new AiolaClient({ accessToken });
+        // Retry operation with new client
+        break;
+        
+      case 'MAX_CONCURRENCY_REACHED':
+        // Wait and retry, or close other sessions
+        console.log('Please close existing sessions or wait');
+        break;
+        
+      case 'RATE_LIMIT_EXCEEDED':
+        // Implement exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Retry operation
+        break;
+        
+      default:
+        console.error('Unexpected error:', error.reason || error.message);
+    }
+  }
+}
+```
+
+---
+
+### Audio Format Requirements
+
+#### File Transcription
+
+**Supported formats:** WAV, MP3, M4A, OGG, FLAC
+
+**Recommended specifications:**
+- Sample rate: 16kHz or higher
+- Channels: Mono or stereo
+- Bit depth: 16-bit
+
+#### Streaming Audio
+
+**Required specifications:**
+- Format: 16-bit PCM (raw audio)
+- Sample rate: 16kHz
+- Channels: Mono (1 channel)
+- Encoding: Little-endian
+
+**Chunk size recommendations:**
+- Minimum: 100ms of audio (~3,200 bytes)
+- Recommended: 100-500ms chunks
+- Maximum: 1000ms per chunk
+
+---
+
+### Voice Activity Detection (VAD)
+
+Configure how speech and silence are detected in audio streams.
+
+**Configuration options:**
+
+```typescript
+{
+  threshold?: number        // Detection threshold (0.0-1.0, default: ~0.5)
+  min_speech_ms?: number    // Minimum speech duration (default: ~250ms)
+  min_silence_ms?: number   // Minimum silence to split segments (default: ~500ms)
+  max_segment_ms?: number   // Maximum segment duration (default: ~30000ms)
+}
+```
+
+**Example:**
+
+```typescript
+const stream = await client.stt.stream({
+  langCode: 'en',
+  vadConfig: {
+    threshold: 0.6,          // More conservative detection
+    min_speech_ms: 300,      // Ignore very short sounds
+    min_silence_ms: 700,     // Wait longer before splitting
+    max_segment_ms: 15000    // Shorter maximum segments
+  }
+});
+```
+
+---
+
+### AI Tasks Configuration
+
+Enable AI-powered analysis tasks during transcription.
+
+**Available tasks:**
+
+```typescript
+{
+  TRANSLATION?: {
+    src_lang_code: string,   // Source language (e.g., 'en')
+    dst_lang_code: string    // Target language (e.g., 'es')
+  },
+  ENTITY_DETECTION?: {},
+  ENTITY_DETECTION_FROM_LIST?: {
+    entity_list: string[]    // List of entities to detect
+  },
+  KEY_PHRASES?: {},
+  PII_REDACTION?: {},
+  SENTIMENT_ANALYSIS?: {},
+  SUMMARIZATION?: {},
+  TOPIC_DETECTION?: {},
+  CONTENT_MODERATION?: {},
+  AUTO_CHAPTERS?: {},
+  FORM_FILLING?: {}
+}
+```
+
+**Example:**
+
+```typescript
+const stream = await client.stt.stream({
+  langCode: 'en',
+  tasksConfig: {
+    TRANSLATION: {
+      src_lang_code: 'en',
+      dst_lang_code: 'es'
+    },
+    SENTIMENT_ANALYSIS: {},
+    PII_REDACTION: {}
+  }
+});
+```
+
+---
+
+### Browser vs Node.js Differences
+
+#### File Handling
+
+**Node.js:**
+```typescript
+// File path
+const result = await client.stt.transcribeFile({ file: './audio.wav' });
+
+// Buffer
+const buffer = await fs.readFile('./audio.wav');
+const result = await client.stt.transcribeFile({ file: buffer });
+
+// ReadStream
+const stream = fs.createReadStream('./audio.wav');
+const result = await client.stt.transcribeFile({ file: stream });
+```
+
+**Browser:**
+```typescript
+// File from input
+const fileInput = document.querySelector('input[type="file"]');
+const result = await client.stt.transcribeFile({ file: fileInput.files[0] });
+
+// Blob
+const blob = new Blob([audioData], { type: 'audio/wav' });
+const result = await client.stt.transcribeFile({ file: blob });
+```
+
+#### Audio Streaming
+
+**Node.js:**
+```typescript
+// Use Buffer
+connection.send(Buffer.from(audioData));
+```
+
+**Browser:**
+```typescript
+// Use ArrayBuffer or TypedArray
+const buffer = Buffer.from(audioData);  // SDK provides Buffer polyfill
+connection.send(buffer);
+```
+
+---
+
+## Troubleshooting
+
+### Connection Issues
+
+**Problem:** `connect_error` events or connection timeouts
+
+**Solutions:**
+- Verify your network connection
+- Check if firewall is blocking WebSocket connections
+- Ensure you're using a valid access token
+- Try increasing the timeout in your application
+
+### Audio Quality Issues
+
+**Problem:** Poor transcription accuracy
+
+**Solutions:**
+- Ensure audio is in the correct format (16-bit PCM, 16kHz, mono for streaming)
+- Check audio quality - remove background noise if possible
+- Use the `keywords` parameter to boost recognition of domain-specific terms
+- Adjust VAD configuration for your use case
+- Verify the correct language code is specified
+
+### Token Expiration
+
+**Problem:** `TOKEN_EXPIRED` errors
+
+**Solutions:**
+- Tokens have an expiration time - generate a new token when needed
+- Implement automatic token refresh in your application
+- The SDK validates tokens with a 5-minute buffer before expiration
+
+### Concurrency Limits
+
+**Problem:** `MAX_CONCURRENCY_REACHED` errors
+
+**Solutions:**
+- Close unused sessions using `AiolaClient.closeSession()`
+- Wait for existing sessions to expire
+- Upgrade your plan for higher concurrency limits
+- Implement session pooling and reuse in your application
+
+### Streaming Disconnects
+
+**Problem:** Unexpected disconnections during streaming
+
+**Solutions:**
+- The SDK automatically attempts to reconnect (up to 3 attempts)
+- Listen to `disconnect` and `connect` events to handle reconnections
+- Implement your own reconnection logic if needed
+- Check for network stability issues
+
+### File Upload Errors
+
+**Problem:** Errors when uploading files for transcription
+
+**Solutions:**
+- Verify the file format is supported (WAV, MP3, M4A, OGG, FLAC)
+- Check file size limits
+- Ensure proper file permissions (Node.js)
+- Verify the file is not corrupted
+
+### Getting Help
+
+If you encounter issues not covered here:
+
+1. Check the [documentation](https://docs.aiola.ai)
+2. Review the [examples](./examples) directory
+3. Contact Aiola support with:
+   - Error messages and codes
+   - SDK version
+   - Node.js/browser version
+   - Minimal code to reproduce the issue
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
